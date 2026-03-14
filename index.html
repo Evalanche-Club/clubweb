@@ -834,7 +834,7 @@
       Evalanche
       <span class="highlight">Club</span>
     </h1>
-    <p class="hero-sub">For the students · By the students · Since 2020</p>
+    <p class="hero-sub" id="hero-tagline">For the students · By the students · Since 2020</p>
     <div class="hero-cta-group">
       <a href="events.html" class="btn-primary">Explore Events</a>
       <a href="about.html" class="btn-ghost">About Us</a>
@@ -848,19 +848,19 @@
   <!-- STATS STRIP -->
   <div class="stats-strip">
     <div class="stat-item">
-      <div class="stat-number" data-target="500">0</div>
+      <div class="stat-number" id="stat-members" data-target="500">0</div>
       <div class="stat-label">Active Members</div>
     </div>
     <div class="stat-item">
-      <div class="stat-number" data-target="40">0</div>
+      <div class="stat-number" id="stat-events" data-target="40">0</div>
       <div class="stat-label">Events / Year</div>
     </div>
     <div class="stat-item">
-      <div class="stat-number" data-target="12">0</div>
+      <div class="stat-number" id="stat-domains" data-target="12">0</div>
       <div class="stat-label">Technical Domains</div>
     </div>
     <div class="stat-item">
-      <div class="stat-number" data-target="5">0</div>
+      <div class="stat-number" id="stat-years" data-target="5">0</div>
       <div class="stat-label">Years Strong</div>
     </div>
   </div>
@@ -923,7 +923,7 @@
       <div>
         <p class="intro-label">Who We Are</p>
         <h2 class="intro-heading">A community built on curiosity & code</h2>
-        <p class="intro-body">
+        <p class="intro-body" id="club-description">
           The Evalanche Club is the student-led technical and cultural hub of the Department of Electronics and Communication Engineering at Jain (Deemed-to-be) University. We bridge the gap between classroom knowledge and real-world innovation — through hackathons, seminars, workshops, and competitions that push boundaries.
         </p>
         <br>
@@ -1245,6 +1245,55 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
   <script src="main.js"></script>
+  <script>
+    // ── Pull site_settings from Supabase and update homepage live ──────────
+    (async () => {
+      try {
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+        const { data, error } = await db.from('site_settings').select('key, value');
+        if (error || !data) return; // fail silently — hardcoded fallbacks stay
+
+        const settings = {};
+        data.forEach(row => { settings[row.key] = row.value; });
+
+        // Stats — update data-target so the counter animation uses the live value
+        const statMap = {
+          stat_members: 'stat-members',
+          stat_events:  'stat-events',
+          stat_domains: 'stat-domains',
+          stat_years:   'stat-years',
+        };
+
+        Object.entries(statMap).forEach(([key, id]) => {
+          if (!settings[key]) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          const val = parseInt(settings[key]);
+          el.dataset.target = val;
+          // If the counter already ran (element visible), restart it
+          el.textContent = '0';
+        });
+
+        // Text fields
+        if (settings.hero_tagline) {
+          const el = document.getElementById('hero-tagline');
+          if (el) el.textContent = settings.hero_tagline;
+        }
+
+        if (settings.club_description) {
+          const el = document.getElementById('club-description');
+          if (el) el.textContent = settings.club_description;
+        }
+
+      } catch (e) {
+        // Never crash the homepage over settings
+      }
+    })();
+  </script>
 </body>
 </html>
