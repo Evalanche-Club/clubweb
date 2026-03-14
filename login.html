@@ -180,35 +180,247 @@
   <div class="auth-container">
     <a href="index.html" class="auth-back"><i class="fas fa-arrow-left"></i> BACK TO HOME</a>
 
-    <div class="auth-card">
+    <!-- MAIN LOGIN CARD -->
+    <div class="auth-card" id="loginCard">
       <img src="assets/images/logo.png" alt="Evalanche" class="auth-logo">
       <h1>Welcome back</h1>
-      <p class="auth-sub">Sign in with your Virtual ID to access your Evalanche member dashboard.</p>
+      <p class="auth-sub">Sign in to your Evalanche member account.</p>
 
-      <form>
-        <div class="form-group">
-          <label>Virtual ID</label>
-          <div class="input-wrap">
-            <i class="fas fa-id-card"></i>
-            <input type="text" placeholder="Enter your Virtual ID" required>
-          </div>
+      <div id="loginError" style="display:none;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;color:#ff4d6d;margin-bottom:1rem;line-height:1.5;"></div>
+      <div id="loginInfo" style="display:none;background:rgba(77,240,255,0.08);border:1px solid rgba(77,240,255,0.2);border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;color:var(--accent);margin-bottom:1rem;line-height:1.5;"></div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email">
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <div class="input-wrap">
-            <i class="fas fa-lock"></i>
-            <input type="password" placeholder="••••••••" required>
-          </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
         </div>
-        <button type="submit" class="auth-submit">Sign In →</button>
-      </form>
+      </div>
+
+      <div style="text-align:right;margin-top:-0.5rem;margin-bottom:1rem;">
+        <a href="#" onclick="showForgotPassword()" style="font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.15em;color:rgba(255,255,255,0.35);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">FORGOT PASSWORD?</a>
+      </div>
+
+      <button class="auth-submit" id="loginBtn" onclick="doLogin()">Sign In →</button>
 
       <div class="auth-divider"><span>OR</span></div>
-
       <p class="auth-switch">Don't have an account? <a href="signup.html">Sign up here</a></p>
+    </div>
+
+    <!-- FORGOT PASSWORD CARD -->
+    <div class="auth-card" id="forgotCard" style="display:none;">
+      <img src="assets/images/logo.png" alt="Evalanche" class="auth-logo">
+      <h1>Reset password</h1>
+      <p class="auth-sub">Enter your email and we'll send you a reset link.</p>
+
+      <div id="forgotMsg" style="display:none;border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;margin-bottom:1rem;line-height:1.5;"></div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="forgotEmail" placeholder="your@email.com">
+        </div>
+      </div>
+      <button class="auth-submit" id="forgotBtn" onclick="doForgotPassword()">Send Reset Link →</button>
+
+      <div style="text-align:center;margin-top:1.5rem;">
+        <a href="#" onclick="showLogin()" style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.35);text-decoration:none" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">← BACK TO LOGIN</a>
+      </div>
+    </div>
+
+    <!-- PENDING APPROVAL CARD -->
+    <div class="auth-card" id="pendingCard" style="display:none;text-align:center;">
+      <div style="width:60px;height:60px;border-radius:50%;background:rgba(255,200,77,0.1);border:2px solid rgba(255,200,77,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:1.4rem;color:#ffc84d">
+        <i class="fas fa-clock"></i>
+      </div>
+      <h1 style="font-size:1.4rem">Pending Approval</h1>
+      <p class="auth-sub" style="margin-top:0.5rem">Your account is verified but waiting for admin approval. You'll be notified once approved.</p>
+      <a href="index.html" class="auth-submit" style="display:block;text-decoration:none;text-align:center;margin-top:1.5rem">Back to Home</a>
+    </div>
+
+    <!-- LOGGED IN MEMBER DASHBOARD -->
+    <div class="auth-card" id="dashCard" style="display:none;">
+      <img src="assets/images/logo.png" alt="Evalanche" class="auth-logo">
+      <h1 id="dashGreeting">Welcome</h1>
+      <p class="auth-sub" id="dashSub">You are signed in to your Evalanche account.</p>
+
+      <div style="background:rgba(77,240,255,0.06);border:1px solid rgba(77,240,255,0.15);border-radius:4px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;">
+        <div style="font-family:var(--font-mono);font-size:0.52rem;letter-spacing:0.3em;color:var(--accent);margin-bottom:0.5rem">YOUR VIRTUAL ID</div>
+        <div id="dashVirtualId" style="font-family:var(--font-mono);font-size:1rem;letter-spacing:0.2em;color:#fff">—</div>
+      </div>
+
+      <div id="dashDetails" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.5rem;font-size:0.8rem;"></div>
+
+      <button class="auth-submit" style="background:transparent;border:1px solid rgba(255,77,109,0.4);color:#ff4d6d;" onclick="doLogout()">
+        <i class="fas fa-sign-out-alt"></i> Sign Out
+      </button>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
   <script src="main.js"></script>
+  <script>
+  'use strict';
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // ── On load: check if already signed in ────────────────────────────────────
+  (async () => {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) await loadMemberDashboard(session.user);
+  })();
+
+  // ── Login ──────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errEl    = document.getElementById('loginError');
+    const infoEl   = document.getElementById('loginInfo');
+    const btn      = document.getElementById('loginBtn');
+
+    errEl.style.display  = 'none';
+    infoEl.style.display = 'none';
+
+    if (!email || !password) {
+      errEl.textContent    = 'Please enter your email and password.';
+      errEl.style.display  = 'block';
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Signing in…';
+
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+
+    btn.disabled    = false;
+    btn.textContent = 'Sign In →';
+
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('email not confirmed')) {
+        errEl.textContent = 'Please verify your email first. Check your inbox for the verification link.';
+      } else if (msg.includes('invalid login') || msg.includes('invalid credentials')) {
+        errEl.textContent = 'Incorrect email or password. Please try again.';
+      } else {
+        errEl.textContent = error.message;
+      }
+      errEl.style.display = 'block';
+      return;
+    }
+
+    await loadMemberDashboard(data.user);
+  }
+
+  // Enter key support
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // ── Load member dashboard after successful login ───────────────────────────
+  async function loadMemberDashboard(user) {
+    // Fetch member record from database
+    const { data: member } = await db
+      .from('members')
+      .select('*')
+      .eq('email', user.email)
+      .single();
+
+    document.getElementById('loginCard').style.display = 'none';
+
+    if (!member || member.status === 'pending') {
+      document.getElementById('pendingCard').style.display = 'block';
+      return;
+    }
+
+    if (member.status === 'suspended') {
+      document.getElementById('loginCard').style.display  = 'block';
+      const errEl = document.getElementById('loginError');
+      errEl.textContent   = 'Your account has been suspended. Contact the admin.';
+      errEl.style.display = 'block';
+      await db.auth.signOut();
+      return;
+    }
+
+    // Active member — show dashboard
+    document.getElementById('dashCard').style.display     = 'block';
+    document.getElementById('dashGreeting').textContent   = `Hi, ${member.first_name} 👋`;
+    document.getElementById('dashSub').textContent        = `${member.role === 'core_team' ? 'Core Team · ' : ''}${member.year || 'ECE'} · Evalanche Club`;
+    document.getElementById('dashVirtualId').textContent  = member.virtual_id || '—';
+
+    const details = [
+      ['Email',    member.email],
+      ['Section',  member.section || '—'],
+      ['Interest', member.interest || '—'],
+      ['Status',   member.status],
+    ];
+
+    document.getElementById('dashDetails').innerHTML = details.map(([label, val]) => `
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:3px;padding:0.75rem;">
+        <div style="font-family:var(--font-mono);font-size:0.5rem;letter-spacing:0.25em;color:rgba(255,255,255,0.3);margin-bottom:0.25rem">${label.toUpperCase()}</div>
+        <div style="font-size:0.8rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${val}</div>
+      </div>
+    `).join('');
+  }
+
+  // ── Logout ─────────────────────────────────────────────────────────────────
+  async function doLogout() {
+    await db.auth.signOut();
+    document.getElementById('dashCard').style.display  = 'none';
+    document.getElementById('loginCard').style.display = 'block';
+    document.getElementById('loginEmail').value    = '';
+    document.getElementById('loginPassword').value = '';
+  }
+
+  // ── Forgot password ────────────────────────────────────────────────────────
+  function showForgotPassword() {
+    document.getElementById('loginCard').style.display  = 'none';
+    document.getElementById('forgotCard').style.display = 'block';
+  }
+
+  function showLogin() {
+    document.getElementById('forgotCard').style.display = 'none';
+    document.getElementById('loginCard').style.display  = 'block';
+  }
+
+  async function doForgotPassword() {
+    const email  = document.getElementById('forgotEmail').value.trim();
+    const msgEl  = document.getElementById('forgotMsg');
+    const btn    = document.getElementById('forgotBtn');
+
+    if (!email) {
+      msgEl.style.cssText = 'display:block;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;color:#ff4d6d;margin-bottom:1rem;';
+      msgEl.textContent   = 'Please enter your email address.';
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Sending…';
+
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: `${location.origin}/verify.html?type=recovery`
+    });
+
+    btn.disabled    = false;
+    btn.textContent = 'Send Reset Link →';
+
+    if (error) {
+      msgEl.style.cssText = 'display:block;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;color:#ff4d6d;margin-bottom:1rem;';
+      msgEl.textContent   = error.message;
+    } else {
+      msgEl.style.cssText = 'display:block;background:rgba(77,240,255,0.08);border:1px solid rgba(77,240,255,0.2);border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;color:var(--accent);margin-bottom:1rem;';
+      msgEl.textContent   = `Reset link sent to ${email}. Check your inbox.`;
+      btn.style.display   = 'none';
+    }
+  }
+  </script>
 </body>
 </html>

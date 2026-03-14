@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verifying your account — Evalanche Club</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .verify-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(13,17,23,0.95);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3rem 2.5rem;
+      text-align: center;
+      backdrop-filter: blur(30px);
+    }
+
+    .verify-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.75rem;
+      font-size: 1.8rem;
+      transition: all 0.4s;
+    }
+
+    .verify-icon.loading {
+      background: rgba(77,240,255,0.08);
+      border: 2px solid rgba(77,240,255,0.2);
+      color: var(--accent);
+    }
+
+    .verify-icon.success {
+      background: rgba(77,255,145,0.1);
+      border: 2px solid rgba(77,255,145,0.35);
+      color: #4dff91;
+      animation: popIn 0.4s ease;
+    }
+
+    .verify-icon.error {
+      background: rgba(255,77,109,0.1);
+      border: 2px solid rgba(255,77,109,0.35);
+      color: #ff4d6d;
+    }
+
+    .verify-icon.recovery {
+      background: rgba(255,200,77,0.1);
+      border: 2px solid rgba(255,200,77,0.35);
+      color: #ffc84d;
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.7); opacity: 0; }
+      70%  { transform: scale(1.1); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .verify-card h1 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.6rem;
+    }
+
+    .verify-card p {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .verify-btn {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.85rem 2rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+
+    .verify-btn:hover { box-shadow: 0 0 20px rgba(77,240,255,0.35); }
+
+    .verify-btn-ghost {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.75rem 2rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .verify-btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+
+    /* Password reset form */
+    .reset-form { display: none; text-align: left; margin-top: 1.5rem; }
+
+    .rf-group { margin-bottom: 1rem; }
+    .rf-group label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .rf-group input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.8rem 1rem;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .rf-group input:focus { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="verify-card">
+    <!-- Icon changes based on state -->
+    <div class="verify-icon loading" id="verifyIcon">
+      <i class="fas fa-circle-notch spin" id="verifyIconInner"></i>
+    </div>
+
+    <h1 id="verifyTitle">Verifying…</h1>
+    <p id="verifyMsg">Please wait while we confirm your account.</p>
+
+    <!-- Password reset form (shown only for recovery links) -->
+    <div class="reset-form" id="resetForm">
+      <div class="rf-group">
+        <label>New Password</label>
+        <input type="password" id="newPw" placeholder="At least 8 characters">
+      </div>
+      <div class="rf-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPw" placeholder="Repeat your password">
+      </div>
+      <div id="resetError" style="display:none;font-size:0.78rem;color:#ff4d6d;margin-bottom:0.75rem;"></div>
+      <button class="verify-btn" style="width:100%;display:block;text-align:center;" onclick="submitNewPassword()">
+        Set New Password →
+      </button>
+    </div>
+
+    <div id="verifyActions"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="main.js"></script>
+  <script>
+  'use strict';
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const icon    = document.getElementById('verifyIcon');
+  const iconEl  = document.getElementById('verifyIconInner');
+  const title   = document.getElementById('verifyTitle');
+  const msg     = document.getElementById('verifyMsg');
+  const actions = document.getElementById('verifyActions');
+
+  function setSuccess(t, m, btnLabel, btnHref) {
+    icon.className  = 'verify-icon success';
+    iconEl.className = 'fas fa-check';
+    title.textContent = t;
+    msg.textContent   = m;
+    actions.innerHTML = `<a href="${btnHref}" class="verify-btn">${btnLabel}</a>`;
+  }
+
+  function setError(t, m) {
+    icon.className   = 'verify-icon error';
+    iconEl.className = 'fas fa-times';
+    title.textContent = t;
+    msg.textContent   = m;
+    actions.innerHTML = `
+      <a href="signup.html" class="verify-btn">Sign Up Again</a><br>
+      <a href="login.html" class="verify-btn-ghost" style="margin-top:0.75rem">Go to Login</a>
+    `;
+  }
+
+  function setRecovery() {
+    icon.className    = 'verify-icon recovery';
+    iconEl.className  = 'fas fa-key';
+    title.textContent = 'Reset your password';
+    msg.textContent   = 'Enter a new password for your account.';
+    document.getElementById('resetForm').style.display = 'block';
+  }
+
+  async function submitNewPassword() {
+    const pw  = document.getElementById('newPw').value;
+    const cpw = document.getElementById('confirmPw').value;
+    const err = document.getElementById('resetError');
+    err.style.display = 'none';
+
+    if (pw.length < 8) {
+      err.textContent = 'Password must be at least 8 characters.';
+      err.style.display = 'block';
+      return;
+    }
+    if (pw !== cpw) {
+      err.textContent = 'Passwords do not match.';
+      err.style.display = 'block';
+      return;
+    }
+
+    const { error } = await db.auth.updateUser({ password: pw });
+
+    if (error) {
+      err.textContent = error.message;
+      err.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('resetForm').style.display = 'none';
+    setSuccess(
+      'Password updated!',
+      'Your password has been changed successfully.',
+      'Go to Login →',
+      'login.html'
+    );
+  }
+
+  // ── Main: handle the redirect from Supabase email link ────────────────────
+  (async () => {
+    // Supabase puts the tokens in the URL hash after redirect
+    // The SDK's onAuthStateChange picks them up automatically
+    const { data: { session }, error } = await db.auth.getSession();
+
+    // Also listen for the auth event that fires after token exchange
+    db.auth.onAuthStateChange(async (event, session) => {
+
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        // Check if this is a password recovery flow
+        const urlParams  = new URLSearchParams(window.location.search);
+        const type       = urlParams.get('type');
+
+        if (type === 'recovery') {
+          setRecovery();
+          return;
+        }
+
+        // It's an email confirmation — mark member as active
+        if (session?.user?.email_confirmed_at) {
+          // Update the member's email_verified status in our table
+          await db.from('members')
+            .update({ status: 'pending' }) // stays pending until admin approves
+            .eq('email', session.user.email)
+            .eq('status', 'pending');      // only update if still pending (don't override 'active')
+
+          setSuccess(
+            'Email verified!',
+            'Your email has been confirmed. Your membership application is now pending admin approval. You\'ll be able to log in once approved.',
+            'Go to Login →',
+            'login.html'
+          );
+        }
+      }
+
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecovery();
+      }
+    });
+
+    // Handle case where user arrives with expired/invalid link
+    if (error && !session) {
+      // Give it 3 seconds for the hash to be processed, then check again
+      setTimeout(async () => {
+        const { data: { session: s2 } } = await db.auth.getSession();
+        if (!s2) {
+          setError(
+            'Link expired or invalid',
+            'This verification link has expired or already been used. Please sign up again or request a new link.'
+          );
+        }
+      }, 3000);
+    }
+  })();
+  </script>
+</body>
+</html>

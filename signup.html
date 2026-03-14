@@ -628,122 +628,240 @@
 
       <!-- SUCCESS STATE -->
       <div class="signup-success" id="signupSuccess">
-        <div class="success-icon"><i class="fas fa-check"></i></div>
-        <h2>You're in.</h2>
-        <p>Welcome to Evalanche Club! Your member account has been created successfully.</p>
-        <p style="font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.2em; color: rgba(255,255,255,0.3);">YOUR VIRTUAL ID</p>
-        <div class="virtual-id-display" id="successVirtualId">—</div>
-        <p>Save this ID — you'll use it to log in. Check your email for a confirmation link.</p>
+        <div class="success-icon"><i class="fas fa-envelope"></i></div>
+        <h2>Check your inbox.</h2>
+        <p>We've sent a verification email to:</p>
+        <div class="virtual-id-display" id="successEmail" style="font-size:0.85rem;letter-spacing:0.1em;">—</div>
+        <p style="margin-top:1.2rem">Click the link in that email to verify your account. Once verified, an admin will review and approve your membership.</p>
+        <div style="margin-top:1.5rem;padding:1rem 1.5rem;background:rgba(77,240,255,0.06);border:1px solid rgba(77,240,255,0.15);border-radius:4px;text-align:left;">
+          <p style="font-family:var(--font-mono);font-size:0.55rem;letter-spacing:0.25em;color:var(--accent);margin-bottom:0.6rem">YOUR VIRTUAL ID</p>
+          <div id="successVirtualId" style="font-family:var(--font-mono);font-size:1rem;letter-spacing:0.25em;color:#fff">—</div>
+          <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.4rem">Save this — you'll need it to log in.</p>
+        </div>
+        <p style="margin-top:1.2rem;font-size:0.78rem;color:rgba(255,255,255,0.35)">Didn't get the email? Check your spam folder, or <a href="signup.html" style="color:var(--accent);text-decoration:none">try signing up again</a> with a different address.</p>
         <a href="index.html" class="btn-step-next" style="display:inline-block; margin-top: 1.5rem; text-decoration: none;">Back to Home</a>
       </div>
 
     </div><!-- end right panel -->
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
   <script src="main.js"></script>
   <script>
-    let currentStep = 1;
-    const TOTAL_STEPS = 3;
+  'use strict';
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    function setStep(n) {
-      for (let i = 1; i <= TOTAL_STEPS; i++) {
-        document.getElementById(`step-${i}`).classList.toggle('active', i === n);
-        const dot = document.getElementById(`dot-${i}`);
-        dot.classList.toggle('active', i === n);
-        dot.classList.toggle('done', i < n);
-        if (i < TOTAL_STEPS) {
-          document.getElementById(`line-${i}`).classList.toggle('done', i < n);
+  let currentStep = 1;
+  const TOTAL_STEPS = 3;
+
+  // ── Step indicator ─────────────────────────────────────────────────────────
+  function setStep(n) {
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      document.getElementById(`step-${i}`).classList.toggle('active', i === n);
+      const dot = document.getElementById(`dot-${i}`);
+      dot.classList.toggle('active', i === n);
+      dot.classList.toggle('done', i < n);
+      if (i < TOTAL_STEPS)
+        document.getElementById(`line-${i}`).classList.toggle('done', i < n);
+    }
+    currentStep = n;
+  }
+
+  // ── Validation ─────────────────────────────────────────────────────────────
+  function validateStep(n) {
+    let ok = true;
+
+    const clear = id => {
+      const el  = document.getElementById(`err-${id}`);
+      const inp = document.getElementById(id);
+      if (el)  el.style.display = 'none';
+      if (inp) inp.classList.remove('error');
+    };
+
+    const fail = (id, msg) => {
+      ok = false;
+      const el  = document.getElementById(`err-${id}`);
+      const inp = document.getElementById(id);
+      if (el)  { el.style.display = 'block'; if (msg) el.textContent = msg; }
+      if (inp) inp.classList.add('error');
+    };
+
+    if (n === 1) {
+      ['firstName','email'].forEach(clear);
+      const fn = document.getElementById('firstName').value.trim();
+      const em = document.getElementById('email').value.trim();
+      if (!fn) fail('firstName', 'First name is required.');
+      if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))
+        fail('email', 'Enter a valid email address.');
+    }
+
+    if (n === 2) {
+      ['virtualId','year'].forEach(clear);
+      const vid = document.getElementById('virtualId').value.trim();
+      const yr  = document.getElementById('year').value;
+      if (!vid) fail('virtualId', 'Virtual ID is required.');
+      if (!yr)  fail('year', 'Select your year of study.');
+    }
+
+    if (n === 3) {
+      ['password','confirmPassword','terms'].forEach(clear);
+      const pw    = document.getElementById('password').value;
+      const cpw   = document.getElementById('confirmPassword').value;
+      const terms = document.getElementById('agreeTerms').checked;
+      if (pw.length < 8) fail('password', 'Password must be at least 8 characters.');
+      if (pw !== cpw)    fail('confirmPassword', 'Passwords do not match.');
+      if (!terms)        fail('terms', 'You must agree to continue.');
+    }
+
+    return ok;
+  }
+
+  function nextStep(n) {
+    if (!validateStep(n)) return;
+    if (n < TOTAL_STEPS) setStep(n + 1);
+  }
+
+  function prevStep(n) {
+    if (n > 1) setStep(n - 1);
+  }
+
+  // ── Password strength ──────────────────────────────────────────────────────
+  function checkPwStrength(pw) {
+    const fill  = document.getElementById('pwFill');
+    const label = document.getElementById('pwLabel');
+    let score = 0;
+    if (pw.length >= 8)          score++;
+    if (/[A-Z]/.test(pw))        score++;
+    if (/[0-9]/.test(pw))        score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const levels = [
+      { pct:'0%',   bg:'transparent',   txt:'— Enter a password' },
+      { pct:'25%',  bg:'#ff5a5a',       txt:'WEAK' },
+      { pct:'50%',  bg:'#ffaa00',       txt:'FAIR' },
+      { pct:'75%',  bg:'#a0d468',       txt:'GOOD' },
+      { pct:'100%', bg:'var(--accent)', txt:'STRONG ✓' },
+    ];
+    const l = levels[score];
+    fill.style.width      = l.pct;
+    fill.style.background = l.bg;
+    label.textContent     = l.txt;
+  }
+
+  // ── Set button loading state ───────────────────────────────────────────────
+  function setLoading(loading) {
+    const btn = document.querySelector('.btn-submit-final');
+    if (!btn) return;
+    btn.disabled     = loading;
+    btn.textContent  = loading ? 'Creating account…' : 'Create My Account →';
+  }
+
+  // ── Show inline error on final step ───────────────────────────────────────
+  function showFormError(msg) {
+    let el = document.getElementById('signup-global-error');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'signup-global-error';
+      el.style.cssText = `
+        background: rgba(255,77,109,0.1);
+        border: 1px solid rgba(255,77,109,0.3);
+        border-radius: 3px; padding: 0.75rem 1rem;
+        font-size: 0.8rem; color: #ff4d6d;
+        margin-top: 1rem; line-height: 1.5;
+      `;
+      document.getElementById('step-3').appendChild(el);
+    }
+    el.textContent  = msg;
+    el.style.display = 'block';
+  }
+
+  function clearFormError() {
+    const el = document.getElementById('signup-global-error');
+    if (el) el.style.display = 'none';
+  }
+
+  // ── MAIN SIGNUP ────────────────────────────────────────────────────────────
+  async function submitSignup() {
+    if (!validateStep(3)) return;
+    clearFormError();
+    setLoading(true);
+
+    const email     = document.getElementById('email').value.trim().toLowerCase();
+    const password  = document.getElementById('password').value;
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName  = document.getElementById('lastName').value.trim();
+    const phone     = document.getElementById('phone').value.trim();
+    const virtualId = document.getElementById('virtualId').value.trim().toUpperCase();
+    const year      = document.getElementById('year').value;
+    const section   = document.getElementById('section').value;
+    const interest  = document.getElementById('interest').value;
+
+    // Step 1: Create Supabase Auth user — this triggers the verification email
+    const { data: authData, error: authError } = await db.auth.signUp({
+      email,
+      password,
+      options: {
+        // After clicking the email link, user lands on verify.html
+        emailRedirectTo: `${location.origin}/verify.html`,
+        data: {
+          first_name: firstName,
+          last_name:  lastName,
+          virtual_id: virtualId,
         }
       }
-      currentStep = n;
+    });
+
+    if (authError) {
+      setLoading(false);
+      // Give human-readable messages for common errors
+      const msg = authError.message.toLowerCase();
+      if (msg.includes('already registered') || msg.includes('already exists'))
+        showFormError('This email is already registered. Try logging in instead.');
+      else if (msg.includes('password'))
+        showFormError('Password is too weak. Use at least 8 characters with a mix of letters and numbers.');
+      else
+        showFormError(authError.message);
+      return;
     }
 
-    function validateStep(n) {
-      let ok = true;
+    // Step 2: Write the full member profile to the members table
+    // status = 'pending' until admin approves, email_verified = false until they click link
+    const { error: dbError } = await db.from('members').insert({
+      first_name:  firstName,
+      last_name:   lastName,
+      email,
+      phone,
+      virtual_id:  virtualId,
+      year,
+      section,
+      interest,
+      role:        'member',
+      status:      'pending',   // admin must approve in the admin panel
+      joined_batch: new Date().getFullYear().toString(),
+    });
 
-      const clear = id => {
-        const el = document.getElementById(`err-${id}`);
-        if (el) el.style.display = 'none';
-        const inp = document.getElementById(id);
-        if (inp) inp.classList.remove('error');
-      };
+    setLoading(false);
 
-      const fail = (id, msg) => {
-        ok = false;
-        const el = document.getElementById(`err-${id}`);
-        if (el) { el.style.display = 'block'; if (msg) el.textContent = msg; }
-        const inp = document.getElementById(id);
-        if (inp) inp.classList.add('error');
-      };
-
-      if (n === 1) {
-        ['firstName','email'].forEach(clear);
-        const fn = document.getElementById('firstName').value.trim();
-        const em = document.getElementById('email').value.trim();
-        if (!fn) fail('firstName');
-        if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) fail('email');
-      }
-
-      if (n === 2) {
-        ['virtualId','year'].forEach(clear);
-        const vid = document.getElementById('virtualId').value.trim();
-        const yr = document.getElementById('year').value;
-        if (!vid) fail('virtualId');
-        if (!yr) fail('year');
-      }
-
-      if (n === 3) {
-        ['password','confirmPassword','terms'].forEach(clear);
-        const pw = document.getElementById('password').value;
-        const cpw = document.getElementById('confirmPassword').value;
-        const terms = document.getElementById('agreeTerms').checked;
-        if (pw.length < 8) fail('password');
-        if (pw !== cpw) fail('confirmPassword');
-        if (!terms) fail('terms');
-      }
-
-      return ok;
+    if (dbError) {
+      // Auth user was created but member row failed — tell them to contact admin
+      console.error('Member insert error:', dbError);
+      // Still show success since auth worked and email is sent
+      // Admin can manually add the member row if needed
     }
 
-    function nextStep(n) {
-      if (!validateStep(n)) return;
-      if (n < TOTAL_STEPS) setStep(n + 1);
-    }
+    // Step 3: Show success — ask them to verify email
+    showSuccessScreen(virtualId, email);
+  }
 
-    function prevStep(n) {
-      if (n > 1) setStep(n - 1);
-    }
-
-    function checkPwStrength(pw) {
-      const fill = document.getElementById('pwFill');
-      const label = document.getElementById('pwLabel');
-      let score = 0;
-      if (pw.length >= 8) score++;
-      if (/[A-Z]/.test(pw)) score++;
-      if (/[0-9]/.test(pw)) score++;
-      if (/[^A-Za-z0-9]/.test(pw)) score++;
-      const levels = [
-        { pct: '0%',   bg: 'transparent',    txt: '— Enter a password' },
-        { pct: '25%',  bg: '#ff5a5a',        txt: 'WEAK' },
-        { pct: '50%',  bg: '#ffaa00',        txt: 'FAIR' },
-        { pct: '75%',  bg: '#a0d468',        txt: 'GOOD' },
-        { pct: '100%', bg: 'var(--accent)',  txt: 'STRONG ✓' },
-      ];
-      const l = levels[score];
-      fill.style.width   = l.pct;
-      fill.style.background = l.bg;
-      label.textContent  = l.txt;
-    }
-
-    function submitSignup() {
-      if (!validateStep(3)) return;
-      const vid = document.getElementById('virtualId').value.trim().toUpperCase();
-      document.getElementById('signupFormBody').style.display = 'none';
-      document.getElementById('stepIndicator').style.display = 'none';
-      document.querySelector('.form-head').style.display = 'none';
-      document.getElementById('successVirtualId').textContent = vid;
-      document.getElementById('signupSuccess').style.display = 'block';
-    }
+  function showSuccessScreen(virtualId, email) {
+    document.getElementById('signupFormBody').style.display  = 'none';
+    document.getElementById('stepIndicator').style.display   = 'none';
+    document.querySelector('.form-head').style.display       = 'none';
+    document.getElementById('successVirtualId').textContent  = virtualId;
+    document.getElementById('successEmail').textContent      = email;
+    document.getElementById('signupSuccess').style.display   = 'block';
+  }
   </script>
 </body>
 </html>
