@@ -327,22 +327,32 @@
 
   // ── Load member dashboard after successful login ───────────────────────────
   async function loadMemberDashboard(user) {
-    // Fetch member record from database
-    const { data: member } = await db
+    document.getElementById('loginCard').style.display = 'none';
+
+    // Fetch member profile from database
+    const { data: member, error: fetchErr } = await db
       .from('members')
       .select('*')
       .eq('email', user.email)
-      .single();
+      .maybeSingle();  // maybeSingle returns null instead of error if not found
 
-    document.getElementById('loginCard').style.display = 'none';
+    // No member row at all — email confirmed but member row not created yet
+    // This happens if verify.html hasn't been visited yet after signup
+    if (!member) {
+      document.getElementById('pendingCard').style.display = 'block';
+      // Update pending card message
+      const sub = document.querySelector('#pendingCard .auth-sub');
+      if (sub) sub.textContent = 'Your email is verified but your profile is being set up. If this persists, please contact the admin.';
+      return;
+    }
 
-    if (!member || member.status === 'pending') {
+    if (member.status === 'pending') {
       document.getElementById('pendingCard').style.display = 'block';
       return;
     }
 
     if (member.status === 'suspended') {
-      document.getElementById('loginCard').style.display  = 'block';
+      document.getElementById('loginCard').style.display = 'block';
       const errEl = document.getElementById('loginError');
       errEl.textContent   = 'Your account has been suspended. Contact the admin.';
       errEl.style.display = 'block';
@@ -350,23 +360,27 @@
       return;
     }
 
-    // Active member — show dashboard
-    document.getElementById('dashCard').style.display     = 'block';
-    document.getElementById('dashGreeting').textContent   = `Hi, ${member.first_name} 👋`;
-    document.getElementById('dashSub').textContent        = `${member.role === 'core_team' ? 'Core Team · ' : ''}${member.year || 'ECE'} · Evalanche Club`;
-    document.getElementById('dashVirtualId').textContent  = member.virtual_id || '—';
+    // ── Active member — show full dashboard ──────────────────────────────────
+    document.getElementById('dashCard').style.display    = 'block';
+    document.getElementById('dashGreeting').textContent  = `Hi, ${member.first_name} 👋`;
+
+    const roleLabel = member.role === 'core_team' ? 'Core Team · '
+                    : member.role === 'admin'      ? 'Admin · '
+                    : '';
+    document.getElementById('dashSub').textContent = `${roleLabel}${member.year || 'ECE'} · Evalanche Club`;
+    document.getElementById('dashVirtualId').textContent = member.virtual_id || '—';
 
     const details = [
       ['Email',    member.email],
+      ['Year',     member.year    || '—'],
       ['Section',  member.section || '—'],
-      ['Interest', member.interest || '—'],
-      ['Status',   member.status],
+      ['Interest', member.interest|| '—'],
     ];
 
     document.getElementById('dashDetails').innerHTML = details.map(([label, val]) => `
       <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:3px;padding:0.75rem;">
         <div style="font-family:var(--font-mono);font-size:0.5rem;letter-spacing:0.25em;color:rgba(255,255,255,0.3);margin-bottom:0.25rem">${label.toUpperCase()}</div>
-        <div style="font-size:0.8rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${val}</div>
+        <div style="font-size:0.8rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${val}">${val}</div>
       </div>
     `).join('');
   }

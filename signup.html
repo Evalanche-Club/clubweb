@@ -672,14 +672,12 @@
   // ── Validation ─────────────────────────────────────────────────────────────
   function validateStep(n) {
     let ok = true;
-
     const clear = id => {
       const el  = document.getElementById(`err-${id}`);
       const inp = document.getElementById(id);
       if (el)  el.style.display = 'none';
       if (inp) inp.classList.remove('error');
     };
-
     const fail = (id, msg) => {
       ok = false;
       const el  = document.getElementById(`err-${id}`);
@@ -696,36 +694,24 @@
       if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))
         fail('email', 'Enter a valid email address.');
     }
-
     if (n === 2) {
       ['virtualId','year'].forEach(clear);
-      const vid = document.getElementById('virtualId').value.trim();
-      const yr  = document.getElementById('year').value;
-      if (!vid) fail('virtualId', 'Virtual ID is required.');
-      if (!yr)  fail('year', 'Select your year of study.');
+      if (!document.getElementById('virtualId').value.trim()) fail('virtualId', 'Virtual ID is required.');
+      if (!document.getElementById('year').value) fail('year', 'Select your year of study.');
     }
-
     if (n === 3) {
       ['password','confirmPassword','terms'].forEach(clear);
-      const pw    = document.getElementById('password').value;
-      const cpw   = document.getElementById('confirmPassword').value;
-      const terms = document.getElementById('agreeTerms').checked;
+      const pw  = document.getElementById('password').value;
+      const cpw = document.getElementById('confirmPassword').value;
       if (pw.length < 8) fail('password', 'Password must be at least 8 characters.');
       if (pw !== cpw)    fail('confirmPassword', 'Passwords do not match.');
-      if (!terms)        fail('terms', 'You must agree to continue.');
+      if (!document.getElementById('agreeTerms').checked) fail('terms', 'You must agree to continue.');
     }
-
     return ok;
   }
 
-  function nextStep(n) {
-    if (!validateStep(n)) return;
-    if (n < TOTAL_STEPS) setStep(n + 1);
-  }
-
-  function prevStep(n) {
-    if (n > 1) setStep(n - 1);
-  }
+  function nextStep(n) { if (validateStep(n) && n < TOTAL_STEPS) setStep(n + 1); }
+  function prevStep(n) { if (n > 1) setStep(n - 1); }
 
   // ── Password strength ──────────────────────────────────────────────────────
   function checkPwStrength(pw) {
@@ -749,30 +735,22 @@
     label.textContent     = l.txt;
   }
 
-  // ── Set button loading state ───────────────────────────────────────────────
-  function setLoading(loading) {
+  function setLoading(on) {
     const btn = document.querySelector('.btn-submit-final');
     if (!btn) return;
-    btn.disabled     = loading;
-    btn.textContent  = loading ? 'Creating account…' : 'Create My Account →';
+    btn.disabled    = on;
+    btn.textContent = on ? 'Creating account…' : 'Create My Account →';
   }
 
-  // ── Show inline error on final step ───────────────────────────────────────
   function showFormError(msg) {
     let el = document.getElementById('signup-global-error');
     if (!el) {
       el = document.createElement('div');
       el.id = 'signup-global-error';
-      el.style.cssText = `
-        background: rgba(255,77,109,0.1);
-        border: 1px solid rgba(255,77,109,0.3);
-        border-radius: 3px; padding: 0.75rem 1rem;
-        font-size: 0.8rem; color: #ff4d6d;
-        margin-top: 1rem; line-height: 1.5;
-      `;
+      el.style.cssText = 'background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;color:#ff4d6d;margin-top:1rem;line-height:1.5;';
       document.getElementById('step-3').appendChild(el);
     }
-    el.textContent  = msg;
+    el.textContent   = msg;
     el.style.display = 'block';
   }
 
@@ -787,6 +765,7 @@
     clearFormError();
     setLoading(true);
 
+    // Read all field values at the moment of submit — not from autofill
     const email     = document.getElementById('email').value.trim().toLowerCase();
     const password  = document.getElementById('password').value;
     const firstName = document.getElementById('firstName').value.trim();
@@ -797,26 +776,26 @@
     const section   = document.getElementById('section').value;
     const interest  = document.getElementById('interest').value;
 
-    // Step 1: Create Supabase Auth user — this triggers the verification email
+    // Store profile data in localStorage so verify.html can insert it
+    // after the user is authenticated (email confirmed)
+    const profileData = { firstName, lastName, email, phone, virtualId, year, section, interest };
+    try { localStorage.setItem('evalanche_pending_profile', JSON.stringify(profileData)); } catch(e) {}
+
+    // Create auth user — Supabase sends the verification email automatically
     const { data: authData, error: authError } = await db.auth.signUp({
       email,
       password,
       options: {
-        // After clicking the email link, user lands on verify.html
         emailRedirectTo: `${location.origin}/verify.html`,
-        data: {
-          first_name: firstName,
-          last_name:  lastName,
-          virtual_id: virtualId,
-        }
+        data: { first_name: firstName, last_name: lastName, virtual_id: virtualId }
       }
     });
 
+    setLoading(false);
+
     if (authError) {
-      setLoading(false);
-      // Give human-readable messages for common errors
       const msg = authError.message.toLowerCase();
-      if (msg.includes('already registered') || msg.includes('already exists'))
+      if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('unique'))
         showFormError('This email is already registered. Try logging in instead.');
       else if (msg.includes('password'))
         showFormError('Password is too weak. Use at least 8 characters with a mix of letters and numbers.');
@@ -825,42 +804,18 @@
       return;
     }
 
-    // Step 2: Write the full member profile to the members table
-    // status = 'pending' until admin approves, email_verified = false until they click link
-    const { error: dbError } = await db.from('members').insert({
-      first_name:  firstName,
-      last_name:   lastName,
-      email,
-      phone,
-      virtual_id:  virtualId,
-      year,
-      section,
-      interest,
-      role:        'member',
-      status:      'pending',   // admin must approve in the admin panel
-      joined_batch: new Date().getFullYear().toString(),
-    });
-
-    setLoading(false);
-
-    if (dbError) {
-      // Auth user was created but member row failed — tell them to contact admin
-      console.error('Member insert error:', dbError);
-      // Still show success since auth worked and email is sent
-      // Admin can manually add the member row if needed
-    }
-
-    // Step 3: Show success — ask them to verify email
+    // Success — show the "check your inbox" screen with the ACTUAL email from the form
     showSuccessScreen(virtualId, email);
   }
 
   function showSuccessScreen(virtualId, email) {
-    document.getElementById('signupFormBody').style.display  = 'none';
-    document.getElementById('stepIndicator').style.display   = 'none';
-    document.querySelector('.form-head').style.display       = 'none';
-    document.getElementById('successVirtualId').textContent  = virtualId;
-    document.getElementById('successEmail').textContent      = email;
-    document.getElementById('signupSuccess').style.display   = 'block';
+    document.getElementById('signupFormBody').style.display = 'none';
+    document.getElementById('stepIndicator').style.display  = 'none';
+    document.querySelector('.form-head').style.display      = 'none';
+    // Use the passed-in values directly — never pull from DOM again
+    document.getElementById('successVirtualId').textContent = virtualId;
+    document.getElementById('successEmail').textContent     = email;
+    document.getElementById('signupSuccess').style.display  = 'block';
   }
   </script>
 </body>

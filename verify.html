@@ -208,7 +208,7 @@
   const actions = document.getElementById('verifyActions');
 
   function setSuccess(t, m, btnLabel, btnHref) {
-    icon.className  = 'verify-icon success';
+    icon.className   = 'verify-icon success';
     iconEl.className = 'fas fa-check';
     title.textContent = t;
     msg.textContent   = m;
@@ -234,6 +234,49 @@
     document.getElementById('resetForm').style.display = 'block';
   }
 
+  // ── Insert the member profile row now that the user is authenticated ───────
+  async function insertMemberRow(user) {
+    // Check if row already exists (in case they clicked link twice)
+    const { data: existing } = await db
+      .from('members')
+      .select('id')
+      .eq('email', user.email)
+      .maybeSingle();
+
+    if (existing) return; // already inserted, nothing to do
+
+    // Try to get profile data saved by signup.html
+    let profile = {};
+    try {
+      const stored = localStorage.getItem('evalanche_pending_profile');
+      if (stored) profile = JSON.parse(stored);
+    } catch(e) {}
+
+    // Fall back to auth metadata if localStorage is empty
+    const meta = user.user_metadata || {};
+
+    const { error } = await db.from('members').insert({
+      first_name:   profile.firstName  || meta.first_name  || '',
+      last_name:    profile.lastName   || meta.last_name   || '',
+      email:        user.email,
+      phone:        profile.phone      || '',
+      virtual_id:   profile.virtualId  || meta.virtual_id  || user.email.split('@')[0].toUpperCase(),
+      year:         profile.year       || '',
+      section:      profile.section    || '',
+      interest:     profile.interest   || '',
+      role:         'member',
+      status:       'pending',
+      joined_batch: new Date().getFullYear().toString(),
+    });
+
+    if (!error) {
+      // Clean up localStorage now that it's written to DB
+      try { localStorage.removeItem('evalanche_pending_profile'); } catch(e) {}
+    } else {
+      console.error('Member row insert error:', error.message);
+    }
+  }
+
   async function submitNewPassword() {
     const pw  = document.getElementById('newPw').value;
     const cpw = document.getElementById('confirmPw').value;
@@ -242,85 +285,87 @@
 
     if (pw.length < 8) {
       err.textContent = 'Password must be at least 8 characters.';
-      err.style.display = 'block';
-      return;
+      err.style.display = 'block'; return;
     }
     if (pw !== cpw) {
       err.textContent = 'Passwords do not match.';
-      err.style.display = 'block';
-      return;
+      err.style.display = 'block'; return;
     }
 
     const { error } = await db.auth.updateUser({ password: pw });
-
     if (error) {
       err.textContent = error.message;
-      err.style.display = 'block';
-      return;
+      err.style.display = 'block'; return;
     }
 
     document.getElementById('resetForm').style.display = 'none';
-    setSuccess(
-      'Password updated!',
-      'Your password has been changed successfully.',
-      'Go to Login →',
-      'login.html'
-    );
+    setSuccess('Password updated!', 'Your password has been changed. You can now sign in.', 'Go to Login →', 'login.html');
   }
 
-  // ── Main: handle the redirect from Supabase email link ────────────────────
+  // ── Main: handle the redirect ─────────────────────────────────────────────
   (async () => {
-    // Supabase puts the tokens in the URL hash after redirect
-    // The SDK's onAuthStateChange picks them up automatically
-    const { data: { session }, error } = await db.auth.getSession();
+    const urlParams = new URLSearchParams(window.location.search);
+    const type      = urlParams.get('type');
 
-    // Also listen for the auth event that fires after token exchange
+    // If it's a password reset link, show recovery form immediately
+    if (type === 'recovery') {
+      // Wait briefly for Supabase to process the hash tokens
+      setTimeout(() => setRecovery(), 500);
+    }
+
+    // Listen for auth state changes triggered by the link tokens in the URL hash
     db.auth.onAuthStateChange(async (event, session) => {
 
-      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        // Check if this is a password recovery flow
-        const urlParams  = new URLSearchParams(window.location.search);
-        const type       = urlParams.get('type');
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecovery();
+        return;
+      }
 
+      if (event === 'SIGNED_IN' && session?.user) {
+        const user = session.user;
+
+        // If it's a recovery redirect, show the password form
         if (type === 'recovery') {
           setRecovery();
           return;
         }
 
-        // It's an email confirmation — mark member as active
-        if (session?.user?.email_confirmed_at) {
-          // Update the member's email_verified status in our table
-          await db.from('members')
-            .update({ status: 'pending' }) // stays pending until admin approves
-            .eq('email', session.user.email)
-            .eq('status', 'pending');      // only update if still pending (don't override 'active')
+        // Email confirmation flow
+        if (user.email_confirmed_at) {
+          // Now authenticated — safe to insert member row
+          await insertMemberRow(user);
 
           setSuccess(
             'Email verified!',
-            'Your email has been confirmed. Your membership application is now pending admin approval. You\'ll be able to log in once approved.',
+            'Your email is confirmed. Your application is now pending admin approval — you\'ll be able to log in once approved.',
             'Go to Login →',
             'login.html'
           );
         }
       }
-
-      if (event === 'PASSWORD_RECOVERY') {
-        setRecovery();
-      }
     });
 
-    // Handle case where user arrives with expired/invalid link
-    if (error && !session) {
-      // Give it 3 seconds for the hash to be processed, then check again
+    // Fallback: check if session already exists (user refreshed verify page)
+    const { data: { session } } = await db.auth.getSession();
+    if (session?.user?.email_confirmed_at && type !== 'recovery') {
+      await insertMemberRow(session.user);
+      setSuccess(
+        'Email already verified!',
+        'Your email is confirmed and your application is pending admin approval.',
+        'Go to Login →',
+        'login.html'
+      );
+    } else if (!session && type !== 'recovery') {
+      // No session and no recovery — wait 4s for hash processing, then show error
       setTimeout(async () => {
         const { data: { session: s2 } } = await db.auth.getSession();
         if (!s2) {
           setError(
             'Link expired or invalid',
-            'This verification link has expired or already been used. Please sign up again or request a new link.'
+            'This link has expired or already been used. Please sign up again or request a new verification email.'
           );
         }
-      }, 3000);
+      }, 4000);
     }
   })();
   </script>
