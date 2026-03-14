@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Evalanche Club</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <style>
+    :root {
+      --bg:      #060a0e;
+      --bg2:     #0c1118;
+      --bg3:     #111820;
+      --border:  rgba(77,240,255,0.1);
+      --accent:  #4df0ff;
+      --red:     #ff4d6d;
+      --green:   #4dff91;
+      --yellow:  #ffc84d;
+      --text:    #ffffff;
+      --muted:   rgba(255,255,255,0.45);
+      --sidebar: 240px;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { font-size: 14px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SCROLLBAR ─────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(77,240,255,0.2); border-radius: 2px; }
+
+    /* ══════════════════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════════════════ */
+    #loginScreen {
+      position: fixed; inset:0; z-index:9999;
+      background: var(--bg);
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    .login-card {
+      width: 380px;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      border-radius: 6px;
+      padding: 2.5rem;
+    }
+
+    .login-card img {
+      width: 44px; margin-bottom: 1.5rem;
+      filter: drop-shadow(0 0 12px rgba(77,240,255,0.5));
+    }
+
+    .login-card h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem; font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .login-card p {
+      font-size: 0.8rem; color: var(--muted); margin-bottom: 2rem;
+    }
+
+    .lf-group { margin-bottom: 1rem; }
+    .lf-group label {
+      display:block; font-family:'Space Mono',monospace;
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.35); margin-bottom: 0.4rem;
+      text-transform: uppercase;
+    }
+    .lf-group input {
+      width:100%; padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius:2px;
+      color:#fff; font-size: 0.88rem; outline:none;
+      transition: border-color 0.2s;
+    }
+    .lf-group input:focus { border-color: var(--accent); }
+
+    .btn-login {
+      width:100%; padding: 0.85rem;
+      background: var(--accent); color:#000;
+      border:none; border-radius:2px;
+      font-family:'Space Mono',monospace;
+      font-size: 0.7rem; font-weight:700;
+      letter-spacing: 0.15em; text-transform:uppercase;
+      cursor:pointer; transition: box-shadow 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn-login:hover { box-shadow: 0 0 20px rgba(77,240,255,0.35); }
+
+    #loginError {
+      font-size: 0.75rem; color: var(--red);
+      margin-top: 0.75rem; display:none;
+    }
+
+    /* ══════════════════════════════════════════════
+       MAIN LAYOUT
+    ══════════════════════════════════════════════ */
+    #app { display:none; width:100%; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar);
+      min-height: 100vh;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: sticky; top:0; height:100vh;
+      overflow-y: auto; flex-shrink:0;
+    }
+
+    .sidebar-brand {
+      padding: 1.5rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; gap:0.7rem;
+    }
+
+    .sidebar-brand img {
+      width:28px; filter: drop-shadow(0 0 6px rgba(77,240,255,0.4));
+    }
+
+    .sidebar-brand-text {
+      font-family:'Syne',sans-serif;
+      font-size:0.75rem; font-weight:800;
+      letter-spacing:0.15em; color:#fff;
+      line-height:1.2;
+    }
+
+    .sidebar-brand-sub {
+      font-family:'Space Mono',monospace;
+      font-size:0.5rem; letter-spacing:0.2em;
+      color: var(--accent); text-transform:uppercase;
+    }
+
+    .sidebar-section-label {
+      font-family:'Space Mono',monospace;
+      font-size:0.5rem; letter-spacing:0.35em;
+      color:rgba(255,255,255,0.2); text-transform:uppercase;
+      padding: 1.2rem 1.2rem 0.4rem;
+    }
+
+    .sidebar-nav { flex:1; padding-bottom: 1rem; }
+
+    .nav-item {
+      display:flex; align-items:center; gap:0.75rem;
+      padding: 0.7rem 1.2rem;
+      font-size:0.82rem; color: var(--muted);
+      cursor:pointer; transition: all 0.2s;
+      border-left: 2px solid transparent;
+      user-select:none;
+    }
+
+    .nav-item i { width:16px; font-size:0.8rem; text-align:center; }
+    .nav-item:hover { color:#fff; background: rgba(255,255,255,0.03); }
+    .nav-item.active {
+      color: var(--accent);
+      background: rgba(77,240,255,0.06);
+      border-left-color: var(--accent);
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .admin-badge {
+      display:flex; align-items:center; gap:0.6rem;
+      font-size:0.75rem;
+    }
+
+    .admin-avatar {
+      width:30px; height:30px; border-radius:50%;
+      background: rgba(77,240,255,0.12);
+      border: 1px solid rgba(77,240,255,0.3);
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Syne',sans-serif; font-size:0.7rem;
+      font-weight:700; color: var(--accent);
+    }
+
+    .admin-info-name { font-weight:600; font-size:0.78rem; }
+    .admin-info-role {
+      font-family:'Space Mono',monospace;
+      font-size:0.5rem; letter-spacing:0.2em;
+      color: var(--accent);
+    }
+
+    .btn-logout {
+      width:100%; margin-top:0.75rem; padding:0.5rem;
+      background:transparent; border: 1px solid var(--border);
+      border-radius:2px; color: var(--muted);
+      font-family:'Space Mono',monospace; font-size:0.55rem;
+      letter-spacing:0.2em; text-transform:uppercase;
+      cursor:pointer; transition:all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* MAIN CONTENT AREA */
+    .main-content {
+      flex:1; overflow-y:auto; min-width:0;
+    }
+
+    .topbar {
+      position: sticky; top:0; z-index:100;
+      background: rgba(6,10,14,0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 2rem;
+      display:flex; align-items:center;
+      justify-content:space-between;
+    }
+
+    .topbar-title {
+      font-family:'Syne',sans-serif;
+      font-size:1rem; font-weight:700;
+    }
+
+    .topbar-right { display:flex; align-items:center; gap:1rem; }
+
+    .topbar-link {
+      font-family:'Space Mono',monospace; font-size:0.55rem;
+      letter-spacing:0.2em; color: var(--accent);
+      text-decoration:none;
+      border: 1px solid rgba(77,240,255,0.25);
+      padding:0.4rem 0.9rem; border-radius:2px;
+      transition:all 0.2s;
+    }
+    .topbar-link:hover { background: rgba(77,240,255,0.08); }
+
+    .page-section { padding: 2rem; display:none; }
+    .page-section.active { display:block; }
+
+    /* ── CARDS ─────────────────────────────────── */
+    .stats-row {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+      gap:1rem; margin-bottom:2rem;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius:4px; padding:1.2rem;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover { border-color: rgba(77,240,255,0.25); }
+
+    .stat-card-val {
+      font-family:'Syne',sans-serif;
+      font-size:2rem; font-weight:800;
+      color: var(--accent); line-height:1;
+      margin-bottom:0.3rem;
+    }
+
+    .stat-card-label {
+      font-family:'Space Mono',monospace;
+      font-size:0.55rem; letter-spacing:0.25em;
+      color: var(--muted); text-transform:uppercase;
+    }
+
+    /* ── TABLE ─────────────────────────────────── */
+    .table-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius:4px; overflow:hidden;
+      margin-bottom:2rem;
+    }
+
+    .table-toolbar {
+      padding:1rem 1.2rem;
+      display:flex; align-items:center;
+      justify-content:space-between; gap:1rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap:wrap;
+    }
+
+    .table-toolbar-title {
+      font-family:'Syne',sans-serif;
+      font-size:0.9rem; font-weight:700;
+    }
+
+    .table-toolbar-actions { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; }
+
+    .tbl-search {
+      padding:0.5rem 0.9rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius:2px;
+      color:#fff; font-size:0.8rem; outline:none;
+      width:200px;
+    }
+    .tbl-search:focus { border-color: var(--accent); }
+
+    .btn {
+      font-family:'Space Mono',monospace;
+      font-size:0.55rem; letter-spacing:0.15em;
+      text-transform:uppercase; padding:0.5rem 1rem;
+      border-radius:2px; cursor:pointer;
+      transition:all 0.2s; border:none;
+      white-space:nowrap;
+    }
+
+    .btn-primary { background: var(--accent); color:#000; }
+    .btn-primary:hover { box-shadow:0 0 14px rgba(77,240,255,0.35); }
+
+    .btn-outline {
+      background:transparent; color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color:rgba(255,255,255,0.3); color:#fff; }
+
+    .btn-danger { background: var(--red); color:#fff; }
+    .btn-danger:hover { box-shadow:0 0 14px rgba(255,77,109,0.35); }
+
+    .btn-sm { padding:0.35rem 0.7rem; font-size:0.5rem; }
+
+    table { width:100%; border-collapse:collapse; }
+    thead { background: rgba(0,0,0,0.3); }
+
+    th {
+      font-family:'Space Mono',monospace;
+      font-size:0.52rem; letter-spacing:0.25em;
+      color: var(--muted); text-transform:uppercase;
+      padding:0.75rem 1rem; text-align:left;
+      border-bottom: 1px solid var(--border);
+      white-space:nowrap;
+    }
+
+    td {
+      padding:0.75rem 1rem; font-size:0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align:middle;
+    }
+
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge {
+      display:inline-block; padding:0.2rem 0.6rem;
+      border-radius:2px; font-family:'Space Mono',monospace;
+      font-size:0.5rem; letter-spacing:0.15em; text-transform:uppercase;
+    }
+
+    .badge-active  { background:rgba(77,255,145,0.12);  color: var(--green);  border:1px solid rgba(77,255,145,0.25);  }
+    .badge-pending { background:rgba(255,200,77,0.12);  color: var(--yellow); border:1px solid rgba(255,200,77,0.25);  }
+    .badge-suspended { background:rgba(255,77,109,0.12); color: var(--red);  border:1px solid rgba(255,77,109,0.25);  }
+    .badge-info    { background:rgba(77,240,255,0.12);  color: var(--accent); border:1px solid rgba(77,240,255,0.25); }
+
+    .member-cell { display:flex; align-items:center; gap:0.75rem; }
+
+    .member-avatar {
+      width:32px; height:32px; border-radius:50%;
+      object-fit:cover;
+      background: rgba(77,240,255,0.1);
+      border: 1px solid rgba(77,240,255,0.2);
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Syne',sans-serif; font-size:0.7rem;
+      font-weight:700; color: var(--accent); flex-shrink:0;
+    }
+
+    .member-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+
+    .actions-cell { display:flex; gap:0.4rem; flex-wrap:wrap; }
+
+    /* ── GALLERY GRID ──────────────────────────── */
+    .gallery-admin-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+      gap:1rem; margin-bottom:2rem;
+    }
+
+    .gallery-admin-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius:4px; overflow:hidden;
+      transition: border-color 0.2s;
+    }
+
+    .gallery-admin-card:hover { border-color: rgba(77,240,255,0.3); }
+
+    .gallery-admin-img {
+      width:100%; aspect-ratio:16/9;
+      object-fit:cover; display:block;
+      background: var(--bg3);
+    }
+
+    .gallery-admin-info { padding:0.75rem; }
+    .gallery-admin-title { font-size:0.82rem; font-weight:600; margin-bottom:0.2rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gallery-admin-meta { font-size:0.7rem; color: var(--muted); margin-bottom:0.6rem; }
+    .gallery-admin-actions { display:flex; gap:0.4rem; }
+
+    /* ── SETTINGS FORM ─────────────────────────── */
+    .settings-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;
+      margin-bottom:2rem;
+    }
+
+    .settings-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius:4px; padding:1.5rem;
+    }
+
+    .settings-card h3 {
+      font-family:'Syne',sans-serif; font-size:0.9rem;
+      font-weight:700; margin-bottom:1.2rem;
+      padding-bottom:0.75rem; border-bottom: 1px solid var(--border);
+    }
+
+    .field-group { margin-bottom:1rem; }
+    .field-group label {
+      display:block; font-family:'Space Mono',monospace;
+      font-size:0.55rem; letter-spacing:0.25em;
+      color:rgba(255,255,255,0.35); margin-bottom:0.4rem;
+      text-transform:uppercase;
+    }
+
+    .field-group input,
+    .field-group select,
+    .field-group textarea {
+      width:100%; padding:0.65rem 0.9rem;
+      background:rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius:2px;
+      color:#fff; font-size:0.82rem; outline:none;
+      font-family:'Inter',sans-serif;
+      transition: border-color 0.2s;
+      -webkit-appearance:none;
+    }
+
+    .field-group input:focus,
+    .field-group select:focus,
+    .field-group textarea:focus { border-color: var(--accent); }
+
+    .field-group textarea { resize:vertical; min-height:90px; }
+    .field-group select option { background:#0c1118; }
+
+    /* ── MODAL ─────────────────────────────────── */
+    .modal-backdrop {
+      position:fixed; inset:0; z-index:5000;
+      background:rgba(0,0,0,0.85);
+      backdrop-filter:blur(6px);
+      display:flex; align-items:center; justify-content:center;
+      padding:1rem;
+      opacity:0; pointer-events:none;
+      transition:opacity 0.25s;
+    }
+
+    .modal-backdrop.open { opacity:1; pointer-events:all; }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius:6px;
+      width:100%; max-width:580px;
+      max-height:90vh; overflow-y:auto;
+      transform:scale(0.95);
+      transition:transform 0.25s;
+    }
+
+    .modal-backdrop.open .modal { transform:scale(1); }
+
+    .modal-head {
+      padding:1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+
+    .modal-head h2 {
+      font-family:'Syne',sans-serif; font-size:1rem; font-weight:700;
+    }
+
+    .modal-close {
+      background:none; border:none; color: var(--muted);
+      font-size:1.1rem; cursor:pointer; line-height:1;
+      transition:color 0.2s;
+    }
+    .modal-close:hover { color:#fff; }
+
+    .modal-body { padding:1.5rem; }
+    .modal-foot {
+      padding:1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display:flex; justify-content:flex-end; gap:0.6rem;
+    }
+
+    /* Image upload drop zone */
+    .drop-zone {
+      border: 1px dashed rgba(77,240,255,0.25);
+      border-radius:4px; padding:1.5rem;
+      text-align:center; cursor:pointer;
+      transition:all 0.2s;
+      position:relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background:rgba(77,240,255,0.04);
+    }
+    .drop-zone input { position:absolute;inset:0;opacity:0;cursor:pointer; width:100%; height:100%; }
+    .drop-zone i { font-size:1.5rem; color:rgba(77,240,255,0.35); margin-bottom:0.5rem; display:block; }
+    .drop-zone p { font-size:0.78rem; color: var(--muted); }
+    .drop-zone small { font-size:0.68rem; color:rgba(255,255,255,0.2); }
+
+    .img-preview {
+      width:100%; max-height:160px; object-fit:cover;
+      border-radius:3px; margin-top:0.75rem;
+      border: 1px solid var(--border);
+      display:none;
+    }
+
+    /* ── TOAST ─────────────────────────────────── */
+    #toastContainer {
+      position:fixed; bottom:1.5rem; right:1.5rem;
+      z-index:9999; display:flex; flex-direction:column; gap:0.5rem;
+    }
+
+    .toast {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius:4px; padding:0.75rem 1rem;
+      font-size:0.78rem; max-width:280px;
+      display:flex; align-items:center; gap:0.6rem;
+      animation:toastIn 0.3s ease;
+    }
+
+    @keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+
+    .toast.success { border-color:rgba(77,255,145,0.3); }
+    .toast.error   { border-color:rgba(255,77,109,0.3); }
+    .toast.success i { color: var(--green); }
+    .toast.error   i { color: var(--red); }
+
+    /* ── LOADING ────────────────────────────────── */
+    .loading-row td {
+      text-align:center; color: var(--muted);
+      padding: 2rem; font-size:0.78rem;
+    }
+
+    .spinner {
+      display:inline-block; width:14px; height:14px;
+      border:2px solid rgba(77,240,255,0.2);
+      border-top-color: var(--accent); border-radius:50%;
+      animation:spin 0.7s linear infinite;
+      margin-right:0.4rem; vertical-align:middle;
+    }
+
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── EMPTY STATE ────────────────────────────── */
+    .empty-state {
+      text-align:center; padding:3rem;
+      color: var(--muted); font-size:0.82rem;
+    }
+    .empty-state i { font-size:2rem; margin-bottom:0.75rem; display:block; opacity:0.3; }
+
+    /* ── SECTION HEADER ─────────────────────────── */
+    .sec-header {
+      display:flex; align-items:center;
+      justify-content:space-between; margin-bottom:1.5rem;
+      flex-wrap:wrap; gap:0.75rem;
+    }
+
+    .sec-title {
+      font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800;
+    }
+
+    /* ── ANNOUNCEMENT CARDS ─────────────────────── */
+    .ann-list { display:flex; flex-direction:column; gap:0.75rem; margin-bottom:2rem; }
+
+    .ann-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius:4px; padding:1rem 1.2rem;
+      display:flex; align-items:flex-start;
+      justify-content:space-between; gap:1rem;
+      border-left-width: 3px;
+    }
+
+    .ann-card.info    { border-left-color: var(--accent); }
+    .ann-card.warning { border-left-color: var(--yellow); }
+    .ann-card.success { border-left-color: var(--green); }
+
+    .ann-title { font-size:0.85rem; font-weight:600; margin-bottom:0.25rem; }
+    .ann-body  { font-size:0.75rem; color: var(--muted); }
+    .ann-actions { display:flex; gap:0.4rem; flex-shrink:0; }
+
+    /* ── EVENTS GRID ────────────────────────────── */
+    .events-admin-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:1rem; margin-bottom:2rem;
+    }
+
+    .event-admin-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius:4px; overflow:hidden; transition:border-color 0.2s;
+    }
+
+    .event-admin-card:hover { border-color:rgba(77,240,255,0.25); }
+
+    .eac-cover {
+      height:100px; background:var(--bg3);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+    }
+
+    .eac-cover img { width:100%;height:100%;object-fit:cover; }
+    .eac-cover i { font-size:2rem; color:rgba(77,240,255,0.2); }
+
+    .eac-body { padding:1rem; }
+    .eac-title { font-size:0.88rem; font-weight:700; margin-bottom:0.3rem; }
+    .eac-meta  { font-size:0.72rem; color: var(--muted); margin-bottom:0.75rem; }
+    .eac-actions { display:flex; gap:0.4rem; flex-wrap:wrap; }
+
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 900px) {
+      :root { --sidebar: 200px; }
+    }
+
+    @media (max-width: 700px) {
+      body { flex-direction:column; }
+      .sidebar {
+        width:100%; height:auto; min-height:auto;
+        position:relative; overflow-x:auto;
+      }
+      .sidebar-nav { display:flex; flex-direction:row; overflow-x:auto; padding:0; }
+      .nav-item { flex-direction:column; gap:0.25rem; padding:0.75rem;
+        font-size:0.65rem; border-left:none; border-bottom:2px solid transparent;
+        min-width:70px; text-align:center; }
+      .nav-item.active { border-bottom-color: var(--accent); }
+      .sidebar-section-label, .sidebar-footer, .sidebar-brand-sub { display:none; }
+      .settings-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <img src="assets/images/logo.png" alt="Evalanche">
+    <h1>Admin Panel</h1>
+    <p>Evalanche Club — restricted access</p>
+    <div class="lf-group">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="admin@evalanche.club" autocomplete="email">
+    </div>
+    <div class="lf-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Sign In →</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="assets/images/logo.png" alt="Evalanche">
+      <div>
+        <div class="sidebar-brand-text">EVALANCHE</div>
+        <div class="sidebar-brand-sub">Admin CMS</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Overview</div>
+      <div class="nav-item active" onclick="showSection('dashboard')">
+        <i class="fas fa-th-large"></i> Dashboard
+      </div>
+
+      <div class="sidebar-section-label">Content</div>
+      <div class="nav-item" onclick="showSection('members')">
+        <i class="fas fa-users"></i> Members
+      </div>
+      <div class="nav-item" onclick="showSection('gallery')">
+        <i class="fas fa-images"></i> Gallery
+      </div>
+      <div class="nav-item" onclick="showSection('events')">
+        <i class="fas fa-calendar"></i> Events
+      </div>
+      <div class="nav-item" onclick="showSection('announcements')">
+        <i class="fas fa-bullhorn"></i> Announcements
+      </div>
+
+      <div class="sidebar-section-label">Configure</div>
+      <div class="nav-item" onclick="showSection('settings')">
+        <i class="fas fa-cog"></i> Site Settings
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-badge">
+        <div class="admin-avatar" id="adminInitials">A</div>
+        <div>
+          <div class="admin-info-name" id="adminName">Admin</div>
+          <div class="admin-info-role">SUPER ADMIN</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">
+        <i class="fas fa-sign-out-alt"></i> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-right">
+        <a href="index.html" target="_blank" class="topbar-link">
+          <i class="fas fa-external-link-alt"></i> View Site
+        </a>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page-section active" id="sec-dashboard">
+      <div class="stats-row" id="dashStats">
+        <div class="stat-card">
+          <div class="stat-card-val" id="ds-members">—</div>
+          <div class="stat-card-label">Total Members</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-val" id="ds-pending">—</div>
+          <div class="stat-card-label">Pending Approval</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-val" id="ds-gallery">—</div>
+          <div class="stat-card-label">Gallery Photos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-val" id="ds-events">—</div>
+          <div class="stat-card-label">Events</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-val" id="ds-upcoming">—</div>
+          <div class="stat-card-label">Upcoming Events</div>
+        </div>
+      </div>
+
+      <!-- Recent members -->
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <div class="table-toolbar-title">Recent Sign-Ups</div>
+          <button class="btn btn-outline btn-sm" onclick="showSection('members')">View All</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Member</th><th>Virtual ID</th><th>Year</th><th>Status</th><th>Joined</th>
+          </tr></thead>
+          <tbody id="recentMembersBody">
+            <tr class="loading-row"><td colspan="5"><span class="spinner"></span>Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── MEMBERS ── -->
+    <div class="page-section" id="sec-members">
+      <div class="sec-header">
+        <div class="sec-title">Members</div>
+        <button class="btn btn-primary" onclick="openModal('member')">
+          <i class="fas fa-plus"></i> Add Member
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <div class="table-toolbar-title">All Members</div>
+          <div class="table-toolbar-actions">
+            <input class="tbl-search" type="text" placeholder="Search name, ID, email…"
+              oninput="filterMembers(this.value)">
+            <select class="tbl-search" style="width:130px;" onchange="filterMemberStatus(this.value)">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Member</th><th>Virtual ID</th><th>Email</th>
+            <th>Year</th><th>Interest</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="membersBody">
+            <tr class="loading-row"><td colspan="7"><span class="spinner"></span>Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── GALLERY ── -->
+    <div class="page-section" id="sec-gallery">
+      <div class="sec-header">
+        <div class="sec-title">Gallery</div>
+        <button class="btn btn-primary" onclick="openModal('gallery')">
+          <i class="fas fa-upload"></i> Upload Photo
+        </button>
+      </div>
+
+      <div class="table-toolbar" style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;margin-bottom:1.5rem;">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;padding:0.2rem 0;">
+          <button class="btn btn-outline btn-sm gal-filter active" data-cat="" onclick="filterGallery('')">All</button>
+          <button class="btn btn-outline btn-sm gal-filter" data-cat="hackathon" onclick="filterGallery('hackathon')">Hackathon</button>
+          <button class="btn btn-outline btn-sm gal-filter" data-cat="technical" onclick="filterGallery('technical')">Technical</button>
+          <button class="btn btn-outline btn-sm gal-filter" data-cat="cultural" onclick="filterGallery('cultural')">Cultural</button>
+          <button class="btn btn-outline btn-sm gal-filter" data-cat="workshop" onclick="filterGallery('workshop')">Workshop</button>
+          <button class="btn btn-outline btn-sm gal-filter" data-cat="team" onclick="filterGallery('team')">Team</button>
+        </div>
+      </div>
+
+      <div class="gallery-admin-grid" id="galleryGrid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <span class="spinner"></span> Loading gallery…
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EVENTS ── -->
+    <div class="page-section" id="sec-events">
+      <div class="sec-header">
+        <div class="sec-title">Events</div>
+        <button class="btn btn-primary" onclick="openModal('event')">
+          <i class="fas fa-plus"></i> Add Event
+        </button>
+      </div>
+
+      <div class="events-admin-grid" id="eventsGrid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <span class="spinner"></span> Loading events…
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANNOUNCEMENTS ── -->
+    <div class="page-section" id="sec-announcements">
+      <div class="sec-header">
+        <div class="sec-title">Announcements</div>
+        <button class="btn btn-primary" onclick="openModal('announcement')">
+          <i class="fas fa-plus"></i> New Announcement
+        </button>
+      </div>
+      <div class="ann-list" id="annList">
+        <div class="empty-state"><span class="spinner"></span> Loading…</div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page-section" id="sec-settings">
+      <div class="sec-header">
+        <div class="sec-title">Site Settings</div>
+        <button class="btn btn-primary" onclick="saveSettings()">
+          <i class="fas fa-save"></i> Save All Changes
+        </button>
+      </div>
+
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3><i class="fas fa-chart-bar" style="color:var(--accent);margin-right:0.5rem"></i>Homepage Stats</h3>
+          <div class="field-group"><label>Active Members</label>
+            <input type="number" id="set-stat_members" placeholder="500"></div>
+          <div class="field-group"><label>Events Per Year</label>
+            <input type="number" id="set-stat_events" placeholder="40"></div>
+          <div class="field-group"><label>Technical Domains</label>
+            <input type="number" id="set-stat_domains" placeholder="12"></div>
+          <div class="field-group"><label>Years Active</label>
+            <input type="number" id="set-stat_years" placeholder="5"></div>
+        </div>
+
+        <div class="settings-card">
+          <h3><i class="fas fa-pen" style="color:var(--accent);margin-right:0.5rem"></i>Homepage Text</h3>
+          <div class="field-group"><label>Hero Tagline</label>
+            <input type="text" id="set-hero_tagline" placeholder="For the students · By the students…"></div>
+          <div class="field-group"><label>Club Description</label>
+            <textarea id="set-club_description" rows="4" placeholder="Short description shown on homepage"></textarea></div>
+        </div>
+
+        <div class="settings-card">
+          <h3><i class="fas fa-share-alt" style="color:var(--accent);margin-right:0.5rem"></i>Social & Contact</h3>
+          <div class="field-group"><label>Instagram Handle</label>
+            <input type="text" id="set-instagram" placeholder="@evalanche_club"></div>
+          <div class="field-group"><label>LinkedIn Page</label>
+            <input type="text" id="set-linkedin" placeholder="Evalanche Club"></div>
+          <div class="field-group"><label>Contact Email</label>
+            <input type="email" id="set-contact_email" placeholder="evalanche@jainuniversity.ac.in"></div>
+        </div>
+
+        <div class="settings-card">
+          <h3><i class="fas fa-shield-alt" style="color:var(--accent);margin-right:0.5rem"></i>Admin Account</h3>
+          <div class="field-group"><label>New Password</label>
+            <input type="password" id="newPassword" placeholder="Leave blank to keep current"></div>
+          <div class="field-group"><label>Confirm New Password</label>
+            <input type="password" id="confirmNewPassword" placeholder="Repeat new password"></div>
+          <button class="btn btn-outline" style="width:100%;margin-top:0.25rem" onclick="changePassword()">
+            Update Password
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-content -->
+</div><!-- end app -->
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- MEMBER MODAL -->
+<div class="modal-backdrop" id="modal-member">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="memberModalTitle">Add Member</h2>
+      <button class="modal-close" onclick="closeModal('member')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="m-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>First Name*</label>
+          <input type="text" id="m-first_name" placeholder="Arjun"></div>
+        <div class="field-group"><label>Last Name</label>
+          <input type="text" id="m-last_name" placeholder="Kumar"></div>
+      </div>
+      <div class="field-group"><label>Email*</label>
+        <input type="email" id="m-email" placeholder="arjun@jainuniversity.ac.in"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Virtual ID*</label>
+          <input type="text" id="m-virtual_id" placeholder="22BECE01234"></div>
+        <div class="field-group"><label>Phone</label>
+          <input type="text" id="m-phone" placeholder="+91 98765 43210"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Year</label>
+          <select id="m-year">
+            <option value="">Select</option>
+            <option>1st Year</option><option>2nd Year</option>
+            <option>3rd Year</option><option>4th Year</option>
+          </select></div>
+        <div class="field-group"><label>Section</label>
+          <select id="m-section">
+            <option value="">Select</option>
+            <option>A</option><option>B</option><option>C</option>
+            <option>D</option><option>E</option>
+          </select></div>
+      </div>
+      <div class="field-group"><label>Role</label>
+        <select id="m-role">
+          <option value="member">Member</option>
+          <option value="core_team">Core Team</option>
+          <option value="admin">Admin</option>
+        </select></div>
+      <div class="field-group"><label>Status</label>
+        <select id="m-status">
+          <option value="active">Active</option>
+          <option value="pending">Pending</option>
+          <option value="suspended">Suspended</option>
+        </select></div>
+      <div class="field-group"><label>Area of Interest</label>
+        <select id="m-interest">
+          <option value="">Select</option>
+          <option>Embedded Systems & IoT</option>
+          <option>Signal Processing</option>
+          <option>VLSI Design</option>
+          <option>Wireless & RF Communications</option>
+          <option>Robotics & Control Systems</option>
+          <option>Machine Learning / AI</option>
+          <option>Competitive Programming</option>
+          <option>Cultural & Events Management</option>
+          <option>Design & Media</option>
+        </select></div>
+      <div class="field-group"><label>Bio</label>
+        <textarea id="m-bio" rows="3" placeholder="Short bio…"></textarea></div>
+      <div class="field-group"><label>Profile Picture</label>
+        <div class="drop-zone" id="memberDropZone">
+          <input type="file" id="m-photo" accept="image/*" onchange="previewImg(this,'memberPreview','memberDropZone')">
+          <i class="fas fa-user-circle"></i>
+          <p>Click or drag photo here</p>
+          <small>JPG, PNG — max 2 MB</small>
+        </div>
+        <img id="memberPreview" class="img-preview" alt="Preview">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('member')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMember()">Save Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- GALLERY MODAL -->
+<div class="modal-backdrop" id="modal-gallery">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="galleryModalTitle">Upload Photo</h2>
+      <button class="modal-close" onclick="closeModal('gallery')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="g-id">
+      <div class="field-group"><label>Photo*</label>
+        <div class="drop-zone" id="galleryDropZone">
+          <input type="file" id="g-image" accept="image/*" onchange="previewImg(this,'galleryPreview','galleryDropZone')">
+          <i class="fas fa-camera"></i>
+          <p>Click or drag image here</p>
+          <small>JPG, PNG, WebP — max 5 MB</small>
+        </div>
+        <img id="galleryPreview" class="img-preview" alt="Preview">
+      </div>
+      <div class="field-group"><label>Title*</label>
+        <input type="text" id="g-title" placeholder="Hackathon 2024 — Final Round"></div>
+      <div class="field-group"><label>Description</label>
+        <textarea id="g-description" rows="2" placeholder="Optional caption…"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Category*</label>
+          <select id="g-category">
+            <option value="general">General</option>
+            <option value="hackathon">Hackathon</option>
+            <option value="technical">Technical</option>
+            <option value="cultural">Cultural</option>
+            <option value="workshop">Workshop</option>
+            <option value="team">Team</option>
+          </select></div>
+        <div class="field-group"><label>Year</label>
+          <input type="text" id="g-year" placeholder="2024"></div>
+      </div>
+      <div class="field-group"><label>Event Name</label>
+        <input type="text" id="g-event_name" placeholder="Innovathon 2024"></div>
+      <div class="field-group" style="display:flex;align-items:center;gap:0.75rem">
+        <input type="checkbox" id="g-visible" checked style="width:auto;accent-color:var(--accent)">
+        <label style="text-transform:none;letter-spacing:normal;font-size:0.82rem;color:#fff;margin:0">
+          Visible on public gallery
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('gallery')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGallery()">Upload & Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-backdrop" id="modal-event">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="eventModalTitle">Add Event</h2>
+      <button class="modal-close" onclick="closeModal('event')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="e-id">
+      <div class="field-group"><label>Event Title*</label>
+        <input type="text" id="e-title" placeholder="Innovathon 2025"></div>
+      <div class="field-group"><label>Description</label>
+        <textarea id="e-description" rows="3" placeholder="What is this event about?"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Date</label>
+          <input type="date" id="e-date"></div>
+        <div class="field-group"><label>Time</label>
+          <input type="text" id="e-time" placeholder="9:00 AM"></div>
+      </div>
+      <div class="field-group"><label>Venue</label>
+        <input type="text" id="e-venue" placeholder="ECE Seminar Hall, Block C"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Category</label>
+          <select id="e-category">
+            <option value="technical">Technical</option>
+            <option value="cultural">Cultural</option>
+            <option value="soft-skills">Soft Skills</option>
+            <option value="workshop">Workshop</option>
+          </select></div>
+        <div class="field-group"><label>Participation</label>
+          <select id="e-type">
+            <option value="team">Team</option>
+            <option value="individual">Individual</option>
+            <option value="open">Open</option>
+          </select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Duration</label>
+          <input type="text" id="e-duration" placeholder="8 Hours"></div>
+        <div class="field-group"><label>Team Size</label>
+          <input type="text" id="e-team_size" placeholder="2–4 members"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Prize Pool</label>
+          <input type="text" id="e-prize_pool" placeholder="₹5,000"></div>
+        <div class="field-group"><label>Status</label>
+          <select id="e-status">
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+          </select></div>
+      </div>
+      <div class="field-group"><label>Cover Image</label>
+        <div class="drop-zone" id="eventDropZone">
+          <input type="file" id="e-cover" accept="image/*" onchange="previewImg(this,'eventPreview','eventDropZone')">
+          <i class="fas fa-image"></i>
+          <p>Click or drag cover image</p>
+          <small>JPG, PNG — max 3 MB</small>
+        </div>
+        <img id="eventPreview" class="img-preview" alt="Preview">
+      </div>
+      <div class="field-group" style="display:flex;align-items:center;gap:0.75rem">
+        <input type="checkbox" id="e-registration_open" style="width:auto;accent-color:var(--accent)">
+        <label style="text-transform:none;letter-spacing:normal;font-size:0.82rem;color:#fff;margin:0">
+          Registration is open
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('event')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT MODAL -->
+<div class="modal-backdrop" id="modal-announcement">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="annModalTitle">New Announcement</h2>
+      <button class="modal-close" onclick="closeModal('announcement')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="an-id">
+      <div class="field-group"><label>Title*</label>
+        <input type="text" id="an-title" placeholder="Registration for Hackathon 2025 is now open!"></div>
+      <div class="field-group"><label>Body</label>
+        <textarea id="an-body" rows="4" placeholder="Full announcement text…"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field-group"><label>Type</label>
+          <select id="an-type">
+            <option value="info">Info</option>
+            <option value="success">Success</option>
+            <option value="warning">Warning</option>
+          </select></div>
+        <div class="field-group" style="display:flex;flex-direction:column;justify-content:flex-end">
+          <div style="display:flex;align-items:center;gap:0.75rem;padding-bottom:0.2rem">
+            <input type="checkbox" id="an-pinned" style="width:auto;accent-color:var(--accent)">
+            <label style="text-transform:none;letter-spacing:normal;font-size:0.82rem;color:#fff;margin:0">
+              Pin to top of site
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('announcement')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAnnouncement()">Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer"></div>
+
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
+<script>
+'use strict';
+
+// ── Supabase client ──────────────────────────────────────────────────────────
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── State ────────────────────────────────────────────────────────────────────
+let allMembers = [];
+let allGallery = [];
+let galleryFilter = '';
+let memberSearch  = '';
+let memberStatusFilter = '';
+
+// ════════════════════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════════════════════
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!email || !password) { showErr('Please enter email and password.'); return; }
+
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+
+  if (error) { showErr(error.message); return; }
+
+  bootApp(data.user);
+}
+
+function showErr(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+async function doLogout() {
+  await db.auth.signOut();
+  location.reload();
+}
+
+async function changePassword() {
+  const np  = document.getElementById('newPassword').value;
+  const cnp = document.getElementById('confirmNewPassword').value;
+  if (!np) { toast('Enter a new password.', 'error'); return; }
+  if (np !== cnp) { toast('Passwords do not match.', 'error'); return; }
+  const { error } = await db.auth.updateUser({ password: np });
+  if (error) toast(error.message, 'error');
+  else { toast('Password updated.', 'success'); document.getElementById('newPassword').value=''; document.getElementById('confirmNewPassword').value=''; }
+}
+
+// ── Check session on load ────────────────────────────────────────────────────
+(async () => {
+  const { data } = await db.auth.getSession();
+  if (data.session) bootApp(data.session.user);
+})();
+
+// Enter key on login form
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function bootApp(user) {
+  document.getElementById('loginScreen').style.display  = 'none';
+  document.getElementById('app').style.display          = 'flex';
+  const email = user.email || '';
+  document.getElementById('adminName').textContent    = email.split('@')[0] || 'Admin';
+  document.getElementById('adminInitials').textContent = (email[0] || 'A').toUpperCase();
+  loadDashboard();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════════════════════
+const sectionTitles = {
+  dashboard:'Dashboard', members:'Members',
+  gallery:'Gallery', events:'Events',
+  announcements:'Announcements', settings:'Site Settings'
+};
+
+function showSection(name) {
+  document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`sec-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if (el.textContent.trim().toLowerCase().includes(name === 'dashboard' ? 'dashboard' : name.slice(0,5)))
+      el.classList.add('active');
+  });
+  document.getElementById('topbarTitle').textContent = sectionTitles[name] || name;
+
+  const loaders = {
+    members: loadMembers, gallery: loadGallery,
+    events:  loadEvents,  announcements: loadAnnouncements,
+    settings: loadSettings
+  };
+  if (loaders[name]) loaders[name]();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════════════════════════
+async function loadDashboard() {
+  const [
+    { count: mCount },
+    { count: pCount },
+    { count: gCount },
+    { count: eCount },
+    { count: uCount }
+  ] = await Promise.all([
+    db.from('members').select('*', {count:'exact',head:true}),
+    db.from('members').select('*', {count:'exact',head:true}).eq('status','pending'),
+    db.from('gallery').select('*', {count:'exact',head:true}),
+    db.from('events').select('*', {count:'exact',head:true}),
+    db.from('events').select('*', {count:'exact',head:true}).eq('status','upcoming'),
+  ]);
+
+  document.getElementById('ds-members').textContent  = mCount ?? '—';
+  document.getElementById('ds-pending').textContent  = pCount ?? '—';
+  document.getElementById('ds-gallery').textContent  = gCount ?? '—';
+  document.getElementById('ds-events').textContent   = eCount ?? '—';
+  document.getElementById('ds-upcoming').textContent = uCount ?? '—';
+
+  // Recent 8 members
+  const { data } = await db.from('members').select('*').order('created_at',{ascending:false}).limit(8);
+  const tbody = document.getElementById('recentMembersBody');
+  if (!data?.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No members yet.</td></tr>`; return; }
+  tbody.innerHTML = data.map(m => `
+    <tr>
+      <td><div class="member-cell">
+        ${avatarEl(m)}
+        <span>${m.first_name} ${m.last_name||''}</span>
+      </div></td>
+      <td><code style="font-size:0.75rem;color:var(--accent)">${m.virtual_id}</code></td>
+      <td>${m.year||'—'}</td>
+      <td>${statusBadge(m.status)}</td>
+      <td style="color:var(--muted);font-size:0.75rem">${fmtDate(m.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  MEMBERS
+// ════════════════════════════════════════════════════════════════════════════
+async function loadMembers() {
+  const { data, error } = await db.from('members').select('*').order('created_at',{ascending:false});
+  if (error) { toast(error.message,'error'); return; }
+  allMembers = data || [];
+  renderMembers();
+}
+
+function renderMembers() {
+  let list = allMembers;
+  if (memberSearch) {
+    const q = memberSearch.toLowerCase();
+    list = list.filter(m =>
+      (m.first_name+' '+(m.last_name||'')).toLowerCase().includes(q) ||
+      (m.email||'').toLowerCase().includes(q) ||
+      (m.virtual_id||'').toLowerCase().includes(q)
+    );
+  }
+  if (memberStatusFilter) list = list.filter(m => m.status === memberStatusFilter);
+
+  const tbody = document.getElementById('membersBody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">No members found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(m => `
+    <tr>
+      <td><div class="member-cell">
+        ${avatarEl(m)}
+        <div>
+          <div style="font-weight:600">${m.first_name} ${m.last_name||''}</div>
+          <div style="font-size:0.7rem;color:var(--muted)">${m.role||'member'}</div>
+        </div>
+      </div></td>
+      <td><code style="font-size:0.75rem;color:var(--accent)">${m.virtual_id}</code></td>
+      <td style="font-size:0.78rem;color:var(--muted)">${m.email}</td>
+      <td>${m.year||'—'}</td>
+      <td style="font-size:0.75rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${m.interest||'—'}</td>
+      <td>${statusBadge(m.status)}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-outline btn-sm" onclick="editMember('${m.id}')">Edit</button>
+        ${m.status==='pending'
+          ? `<button class="btn btn-primary btn-sm" onclick="approveMember('${m.id}')">Approve</button>`
+          : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')">Delete</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function filterMembers(q)      { memberSearch = q;       renderMembers(); }
+function filterMemberStatus(v) { memberStatusFilter = v; renderMembers(); }
+
+async function approveMember(id) {
+  const { error } = await db.from('members').update({status:'active'}).eq('id',id);
+  if (error) { toast(error.message,'error'); return; }
+  toast('Member approved.','success');
+  await loadMembers();
+}
+
+async function deleteMember(id) {
+  if (!confirm('Delete this member permanently?')) return;
+  const { error } = await db.from('members').delete().eq('id',id);
+  if (error) { toast(error.message,'error'); return; }
+  toast('Member deleted.','success');
+  await loadMembers();
+}
+
+function editMember(id) {
+  const m = allMembers.find(x => x.id === id);
+  if (!m) return;
+  const f = (fid, val) => { const el = document.getElementById(fid); if(el) el.value = val||''; };
+  document.getElementById('m-id').value = m.id;
+  f('m-first_name', m.first_name); f('m-last_name', m.last_name);
+  f('m-email', m.email); f('m-phone', m.phone);
+  f('m-virtual_id', m.virtual_id); f('m-year', m.year);
+  f('m-section', m.section); f('m-role', m.role);
+  f('m-status', m.status); f('m-interest', m.interest);
+  f('m-bio', m.bio);
+  if (m.profile_pic) {
+    const prev = document.getElementById('memberPreview');
+    prev.src = m.profile_pic; prev.style.display = 'block';
+  }
+  document.getElementById('memberModalTitle').textContent = 'Edit Member';
+  openModal('member');
+}
+
+async function saveMember() {
+  const id      = document.getElementById('m-id').value;
+  const fileEl  = document.getElementById('m-photo');
+  const payload = {
+    first_name:  document.getElementById('m-first_name').value.trim(),
+    last_name:   document.getElementById('m-last_name').value.trim(),
+    email:       document.getElementById('m-email').value.trim(),
+    phone:       document.getElementById('m-phone').value.trim(),
+    virtual_id:  document.getElementById('m-virtual_id').value.trim().toUpperCase(),
+    year:        document.getElementById('m-year').value,
+    section:     document.getElementById('m-section').value,
+    role:        document.getElementById('m-role').value,
+    status:      document.getElementById('m-status').value,
+    interest:    document.getElementById('m-interest').value,
+    bio:         document.getElementById('m-bio').value.trim(),
+  };
+
+  if (!payload.first_name || !payload.email || !payload.virtual_id) {
+    toast('First name, email and Virtual ID are required.','error'); return;
+  }
+
+  // Upload photo if selected
+  if (fileEl.files[0]) {
+    const url = await uploadFile(fileEl.files[0], BUCKET_MEMBERS, `${payload.virtual_id}-${Date.now()}`);
+    if (url) payload.profile_pic = url;
+  }
+
+  let error;
+  if (id) {
+    ({ error } = await db.from('members').update(payload).eq('id', id));
+  } else {
+    ({ error } = await db.from('members').insert(payload));
+  }
+
+  if (error) { toast(error.message,'error'); return; }
+  toast(id ? 'Member updated.' : 'Member added.', 'success');
+  closeModal('member');
+  await loadMembers();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  GALLERY
+// ════════════════════════════════════════════════════════════════════════════
+async function loadGallery() {
+  const { data, error } = await db.from('gallery').select('*').order('created_at',{ascending:false});
+  if (error) { toast(error.message,'error'); return; }
+  allGallery = data || [];
+  renderGallery();
+}
+
+function renderGallery() {
+  const grid = document.getElementById('galleryGrid');
+  let list = allGallery;
+  if (galleryFilter) list = list.filter(g => g.category === galleryFilter);
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <i class="fas fa-images"></i>No photos yet. Upload your first one.
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(g => `
+    <div class="gallery-admin-card">
+      <img class="gallery-admin-img"
+        src="${g.image_url}"
+        alt="${g.title}"
+        onerror="this.style.display='none'">
+      <div class="gallery-admin-info">
+        <div class="gallery-admin-title" title="${g.title}">${g.title}</div>
+        <div class="gallery-admin-meta">${g.category||'general'}${g.year ? ' · '+g.year : ''}
+          ${!g.visible ? ' · <span style="color:var(--yellow)">Hidden</span>' : ''}
+        </div>
+        <div class="gallery-admin-actions">
+          <button class="btn btn-outline btn-sm" onclick="editGallery('${g.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteGallery('${g.id}')">Delete</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleGalleryVis('${g.id}',${g.visible})">
+            ${g.visible ? 'Hide':'Show'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterGallery(cat) {
+  galleryFilter = cat;
+  document.querySelectorAll('.gal-filter').forEach(b => {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  renderGallery();
+}
+
+async function toggleGalleryVis(id, current) {
+  const { error } = await db.from('gallery').update({visible:!current}).eq('id',id);
+  if (error) { toast(error.message,'error'); return; }
+  toast(current ? 'Hidden from gallery.' : 'Visible on gallery.','success');
+  await loadGallery();
+}
+
+async function deleteGallery(id) {
+  if (!confirm('Delete this photo permanently?')) return;
+  const { error } = await db.from('gallery').delete().eq('id',id);
+  if (error) { toast(error.message,'error'); return; }
+  toast('Photo deleted.','success');
+  await loadGallery();
+}
+
+function editGallery(id) {
+  const g = allGallery.find(x => x.id === id);
+  if (!g) return;
+  document.getElementById('g-id').value          = g.id;
+  document.getElementById('g-title').value        = g.title||'';
+  document.getElementById('g-description').value  = g.description||'';
+  document.getElementById('g-category').value     = g.category||'general';
+  document.getElementById('g-year').value         = g.year||'';
+  document.getElementById('g-event_name').value   = g.event_name||'';
+  document.getElementById('g-visible').checked    = g.visible !== false;
+  if (g.image_url) {
+    const prev = document.getElementById('galleryPreview');
+    prev.src = g.image_url; prev.style.display = 'block';
+  }
+  document.getElementById('galleryModalTitle').textContent = 'Edit Photo';
+  openModal('gallery');
+}
+
+async function saveGallery() {
+  const id       = document.getElementById('g-id').value;
+  const fileEl   = document.getElementById('g-image');
+  const payload  = {
+    title:        document.getElementById('g-title').value.trim(),
+    description:  document.getElementById('g-description').value.trim(),
+    category:     document.getElementById('g-category').value,
+    year:         document.getElementById('g-year').value.trim(),
+    event_name:   document.getElementById('g-event_name').value.trim(),
+    visible:      document.getElementById('g-visible').checked,
+  };
+
+  if (!payload.title) { toast('Title is required.','error'); return; }
+
+  if (fileEl.files[0]) {
+    const url = await uploadFile(fileEl.files[0], BUCKET_GALLERY, `photo-${Date.now()}`);
+    if (!url) return;
+    payload.image_url = url;
+  } else if (!id) {
+    toast('Please select a photo.','error'); return;
+  }
+
+  let error;
+  if (id) {
+    ({ error } = await db.from('gallery').update(payload).eq('id',id));
+  } else {
+    ({ error } = await db.from('gallery').insert(payload));
+  }
+
+  if (error) { toast(error.message,'error'); return; }
+  toast(id ? 'Photo updated.' : 'Photo uploaded and published.','success');
+  closeModal('gallery');
+  await loadGallery();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  EVENTS
+// ════════════════════════════════════════════════════════════════════════════
+async function loadEvents() {
+  const { data, error } = await db.from('events').select('*').order('created_at',{ascending:false});
+  if (error) { toast(error.message,'error'); return; }
+  renderEvents(data||[]);
+}
+
+function renderEvents(list) {
+  const grid = document.getElementById('eventsGrid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-calendar"></i>No events yet.</div>`;
+    return;
+  }
+
+  const statusColor = { upcoming:'var(--accent)', ongoing:'var(--green)', completed:'var(--muted)' };
+
+  grid.innerHTML = list.map(e => `
+    <div class="event-admin-card">
+      <div class="eac-cover">
+        ${e.cover_image
+          ? `<img src="${e.cover_image}" alt="${e.title}">`
+          : `<i class="fas fa-calendar-alt"></i>`}
+      </div>
+      <div class="eac-body">
+        <div class="eac-title">${e.title}</div>
+        <div class="eac-meta">
+          ${e.date ? fmtDate(e.date)+' · ' : ''}
+          ${e.category} · ${e.type}
+          <span style="color:${statusColor[e.status]||'var(--muted)'}"> · ${e.status}</span>
+        </div>
+        <div class="eac-actions">
+          <button class="btn btn-outline btn-sm" onclick="editEvent('${e.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent('${e.id}')">Delete</button>
+          ${e.status==='upcoming'
+            ? `<button class="btn btn-primary btn-sm" onclick="setEventStatus('${e.id}','ongoing')">Go Live</button>`
+            : e.status==='ongoing'
+            ? `<button class="btn btn-outline btn-sm" onclick="setEventStatus('${e.id}','completed')">Mark Done</button>`
+            : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function setEventStatus(id, status) {
+  const { error } = await db.from('events').update({status}).eq('id',id);
+  if (error) { toast(error.message,'error'); return; }
+  toast(`Event marked as ${status}.`,'success');
+  loadEvents();
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Delete this event?')) return;
+  const { error } = await db.from('events').delete().eq('id',id);
+  if (error) { toast(error.message,'error'); return; }
+  toast('Event deleted.','success');
+  loadEvents();
+}
+
+let allEvents = [];
+async function editEvent(id) {
+  if (!allEvents.length) {
+    const { data } = await db.from('events').select('*');
+    allEvents = data||[];
+  }
+  const e = allEvents.find(x => x.id===id);
+  if (!e) return;
+  const f = (fid, val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
+  document.getElementById('e-id').value = e.id;
+  f('e-title',e.title); f('e-description',e.description);
+  f('e-date',e.date); f('e-time',e.time); f('e-venue',e.venue);
+  f('e-category',e.category); f('e-type',e.type);
+  f('e-duration',e.duration); f('e-team_size',e.team_size);
+  f('e-prize_pool',e.prize_pool); f('e-status',e.status);
+  document.getElementById('e-registration_open').checked = e.registration_open;
+  if (e.cover_image) {
+    const prev = document.getElementById('eventPreview');
+    prev.src = e.cover_image; prev.style.display='block';
+  }
+  document.getElementById('eventModalTitle').textContent = 'Edit Event';
+  openModal('event');
+}
+
+async function saveEvent() {
+  const id     = document.getElementById('e-id').value;
+  const fileEl = document.getElementById('e-cover');
+  const payload = {
+    title:             document.getElementById('e-title').value.trim(),
+    description:       document.getElementById('e-description').value.trim(),
+    date:              document.getElementById('e-date').value || null,
+    time:              document.getElementById('e-time').value.trim(),
+    venue:             document.getElementById('e-venue').value.trim(),
+    category:          document.getElementById('e-category').value,
+    type:              document.getElementById('e-type').value,
+    duration:          document.getElementById('e-duration').value.trim(),
+    team_size:         document.getElementById('e-team_size').value.trim(),
+    prize_pool:        document.getElementById('e-prize_pool').value.trim(),
+    status:            document.getElementById('e-status').value,
+    registration_open: document.getElementById('e-registration_open').checked,
+  };
+
+  if (!payload.title) { toast('Title is required.','error'); return; }
+
+  if (fileEl.files[0]) {
+    const url = await uploadFile(fileEl.files[0], BUCKET_GALLERY, `event-cover-${Date.now()}`);
+    if (url) payload.cover_image = url;
+  }
+
+  let error;
+  if (id) {
+    ({ error } = await db.from('events').update(payload).eq('id',id));
+  } else {
+    ({ error } = await db.from('events').insert(payload));
+  }
+
+  if (error) { toast(error.message,'error'); return; }
+  toast(id ? 'Event updated.' : 'Event created.','success');
+  closeModal('event');
+  allEvents = [];
+  loadEvents();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ANNOUNCEMENTS
+// ════════════════════════════════════════════════════════════════════════════
+async function loadAnnouncements() {
+  const { data, error } = await db.from('announcements').select('*').order('created_at',{ascending:false});
+  if (error) { toast(error.message,'error'); return; }
+  const list = document.getElementById('annList');
+  if (!data?.length) {
+    list.innerHTML = `<div class="empty-state"><i class="fas fa-bullhorn"></i>No announcements yet.</div>`;
+    return;
+  }
+  list.innerHTML = data.map(a => `
+    <div class="ann-card ${a.type||'info'}">
+      <div>
+        <div class="ann-title">
+          ${a.pinned ? '<i class="fas fa-thumbtack" style="color:var(--accent);margin-right:0.4rem;font-size:0.7rem"></i>':''} ${a.title}
+        </div>
+        <div class="ann-body">${a.body||''}</div>
+        <div style="margin-top:0.4rem;font-size:0.7rem;color:var(--muted)">${fmtDate(a.created_at)}</div>
+      </div>
+      <div class="ann-actions">
+        <button class="btn btn-outline btn-sm" onclick="editAnn('${a.id}','${encodeURIComponent(JSON.stringify(a))}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAnn('${a.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editAnn(id, encoded) {
+  const a = JSON.parse(decodeURIComponent(encoded));
+  document.getElementById('an-id').value    = a.id;
+  document.getElementById('an-title').value = a.title||'';
+  document.getElementById('an-body').value  = a.body||'';
+  document.getElementById('an-type').value  = a.type||'info';
+  document.getElementById('an-pinned').checked = a.pinned||false;
+  document.getElementById('annModalTitle').textContent = 'Edit Announcement';
+  openModal('announcement');
+}
+
+async function deleteAnn(id) {
+  if (!confirm('Delete this announcement?')) return;
+  const { error } = await db.from('announcements').delete().eq('id',id);
+  if (error) { toast(error.message,'error'); return; }
+  toast('Deleted.','success');
+  loadAnnouncements();
+}
+
+async function saveAnnouncement() {
+  const id      = document.getElementById('an-id').value;
+  const payload = {
+    title:   document.getElementById('an-title').value.trim(),
+    body:    document.getElementById('an-body').value.trim(),
+    type:    document.getElementById('an-type').value,
+    pinned:  document.getElementById('an-pinned').checked,
+    visible: true,
+  };
+  if (!payload.title) { toast('Title is required.','error'); return; }
+
+  let error;
+  if (id) {
+    ({ error } = await db.from('announcements').update(payload).eq('id',id));
+  } else {
+    ({ error } = await db.from('announcements').insert(payload));
+  }
+
+  if (error) { toast(error.message,'error'); return; }
+  toast(id ? 'Updated.' : 'Announcement published.','success');
+  closeModal('announcement');
+  loadAnnouncements();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════════════════════════════════════════
+async function loadSettings() {
+  const { data } = await db.from('site_settings').select('*');
+  (data||[]).forEach(row => {
+    const el = document.getElementById(`set-${row.key}`);
+    if (el) el.value = row.value || '';
+  });
+}
+
+async function saveSettings() {
+  const keys = [
+    'stat_members','stat_events','stat_domains','stat_years',
+    'hero_tagline','club_description',
+    'instagram','linkedin','contact_email'
+  ];
+
+  const upserts = keys.map(key => ({
+    key,
+    value: (document.getElementById(`set-${key}`)?.value || '').trim()
+  }));
+
+  const { error } = await db.from('site_settings').upsert(upserts, {onConflict:'key'});
+  if (error) { toast(error.message,'error'); return; }
+  toast('Settings saved. Changes are live.','success');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FILE UPLOAD HELPER
+// ════════════════════════════════════════════════════════════════════════════
+async function uploadFile(file, bucket, name) {
+  const ext  = file.name.split('.').pop();
+  const path = `${name}.${ext}`;
+
+  const { error } = await db.storage.from(bucket).upload(path, file, {
+    cacheControl: '3600', upsert: true
+  });
+
+  if (error) { toast('Upload failed: ' + error.message, 'error'); return null; }
+
+  const { data } = db.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ════════════════════════════════════════════════════════════════════════════
+function openModal(name) {
+  document.getElementById(`modal-${name}`).classList.add('open');
+}
+
+function closeModal(name) {
+  document.getElementById(`modal-${name}`).classList.remove('open');
+  // Reset hidden id fields
+  const idEl = document.getElementById(`${name[0]}-id`) || document.getElementById(`an-id`);
+  if (idEl) idEl.value = '';
+  // Reset image previews
+  const prevIds = {member:'memberPreview', gallery:'galleryPreview', event:'eventPreview'};
+  const prev = document.getElementById(prevIds[name]);
+  if (prev) { prev.src=''; prev.style.display='none'; }
+  // Reset file inputs
+  const fileIds = {member:'m-photo', gallery:'g-image', event:'e-cover'};
+  const fi = document.getElementById(fileIds[name]);
+  if (fi) fi.value='';
+  // Reset modal title
+  const titles = {member:'Add Member',gallery:'Upload Photo',event:'Add Event',announcement:'New Announcement'};
+  const th = document.getElementById(`${name==='announcement'?'ann':name}ModalTitle`);
+  if (th) th.textContent = titles[name]||'';
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => {
+    if (e.target === bd) {
+      const name = bd.id.replace('modal-','');
+      closeModal(name);
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  IMAGE PREVIEW
+// ════════════════════════════════════════════════════════════════════════════
+function previewImg(input, previewId, zoneId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(previewId);
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Drag-over styling
+document.querySelectorAll('.drop-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════════════════════════
+function toast(msg, type='success') {
+  const tc  = document.getElementById('toastContainer');
+  const el  = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+  tc.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════════════════════════
+function avatarEl(m) {
+  if (m.profile_pic) {
+    return `<div class="member-avatar"><img src="${m.profile_pic}" alt="${m.first_name}"></div>`;
+  }
+  const ini = ((m.first_name||'?')[0] + (m.last_name||'?')[0]).toUpperCase();
+  return `<div class="member-avatar">${ini}</div>`;
+}
+
+function statusBadge(s) {
+  const map = { active:'badge-active', pending:'badge-pending', suspended:'badge-suspended' };
+  return `<span class="badge ${map[s]||'badge-info'}">${s||'unknown'}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+}
+</script>
+</body>
+</html>

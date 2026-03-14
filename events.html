@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Events — Evalanche Club</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-btn {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.2rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .filter-btn.active,
+    .filter-btn:hover {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      align-items: center;
+      gap: 2.5rem;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--border);
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .event-row::before {
+      content: '';
+      position: absolute;
+      left: -2rem;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.3s;
+    }
+
+    .event-row:hover::before { transform: scaleY(1); }
+    .event-row:hover { padding-left: 1rem; background: rgba(77,240,255,0.02); }
+
+    .event-row-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.15);
+    }
+
+    .event-row-body h3 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.4rem;
+      transition: color 0.3s;
+    }
+
+    .event-row:hover .event-row-body h3 { color: var(--accent); }
+
+    .event-row-body p {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      max-width: 600px;
+    }
+
+    .event-row-tags {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.4rem;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      padding: 0.3rem 0.7rem;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .badge-tech { border: 1px solid rgba(77,240,255,0.4); color: var(--accent); }
+    .badge-cultural { border: 1px solid rgba(255,200,100,0.4); color: #ffc864; }
+    .badge-soft { border: 1px solid rgba(160,100,255,0.4); color: #a064ff; }
+
+    /* UPCOMING SECTION */
+    .upcoming-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .upcoming-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s;
+    }
+
+    .upcoming-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+
+    .upcoming-card:hover::after { transform: scaleX(1); }
+    .upcoming-card:hover { border-color: rgba(77,240,255,0.2); transform: translateY(-4px); }
+
+    .upcoming-date {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .upcoming-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .upcoming-card p {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .upcoming-meta {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 700px) {
+      .event-row { grid-template-columns: 1fr; gap: 0.75rem; }
+      .event-row-num { display: none; }
+      .event-row-tags { flex-direction: row; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
+      <span class="nav-name">EVALANCHE</span>
+    </a>
+    <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="events.html" class="active">Events</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="login.html" class="nav-cta">Member Login</a></li>
+    </ul>
+  </nav>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="page-header">
+    <span class="page-header-eyebrow">What We Do</span>
+    <h1>Events &<br>Activities</h1>
+    <p>Technical. Cultural. Professional. — We run 40+ events every year.</p>
+  </div>
+
+  <main class="container" style="padding-bottom: 6rem;">
+
+    <!-- UPCOMING — loaded from Supabase -->
+    <section style="margin-top: 2rem; margin-bottom: 5rem;">
+      <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.5rem;">
+        <p style="font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.4em; color: var(--accent);">UPCOMING</p>
+        <span style="font-family: var(--font-mono); font-size: 0.55rem; color: rgba(255,255,255,0.2); letter-spacing: 0.1em;" id="upcomingSubtitle">LOADING…</span>
+      </div>
+      <h2 style="font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 2rem;">Next on the Calendar</h2>
+      <div class="upcoming-grid" id="upcomingGrid">
+        <div style="grid-column:1/-1;font-family:var(--font-mono);font-size:0.65rem;color:rgba(255,255,255,0.25);letter-spacing:0.2em;padding:2rem 0">LOADING…</div>
+      </div>
+    </section>
+
+    <!-- FILTER -->
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All Events</button>
+      <button class="filter-btn" data-filter="technical">Technical</button>
+      <button class="filter-btn" data-filter="cultural">Cultural</button>
+      <button class="filter-btn" data-filter="soft-skills">Soft Skills</button>
+      <button class="filter-btn" data-filter="workshop">Workshop</button>
+    </div>
+
+    <!-- ALL EVENTS LIST — loaded from Supabase -->
+    <div class="events-list" id="eventsListContainer">
+      <div style="text-align:center;padding:3rem;font-family:var(--font-mono);font-size:0.65rem;color:rgba(255,255,255,0.25);letter-spacing:0.2em;">LOADING EVENTS…</div>
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/images/logo.png" alt="Evalanche" class="footer-logo">
+        <p class="footer-tagline">EVALANCHE CLUB</p>
+        <p class="footer-sub">Dept. of ECE, Jain (Deemed-to-be) University</p>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Navigate</p>
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Account</p>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <p>© 2025 Evalanche Club — Dept. of ECE, Jain (Deemed-to-be) University. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="main.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    let allEvents   = [];
+    let activeFilter = 'all';
+
+    const catBadge = {
+      technical:  'badge-tech',
+      cultural:   'badge-cultural',
+      'soft-skills': 'badge-soft',
+      workshop:   'badge-soft',
+    };
+
+    function fmtDate(d) {
+      if (!d) return 'DATE TBD';
+      return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }).toUpperCase();
+    }
+
+    async function loadEvents() {
+      const { data, error } = await db
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error || !data) {
+        // Supabase not set up yet — show empty state
+        document.getElementById('upcomingGrid').innerHTML = `
+          <div style="grid-column:1/-1;font-family:var(--font-mono);font-size:0.65rem;
+            color:rgba(255,255,255,0.25);letter-spacing:0.2em;padding:1rem 0">
+            NO UPCOMING EVENTS — ADD THEM FROM THE ADMIN PANEL
+          </div>`;
+        document.getElementById('eventsListContainer').innerHTML = `
+          <div style="text-align:center;padding:3rem;font-family:var(--font-mono);
+            font-size:0.65rem;color:rgba(255,255,255,0.25);letter-spacing:0.2em">
+            NO EVENTS YET
+          </div>`;
+        document.getElementById('upcomingSubtitle').textContent = 'NO EVENTS YET';
+        return;
+      }
+
+      allEvents = data;
+
+      // UPCOMING section — only upcoming/ongoing events, max 3
+      const upcoming = allEvents.filter(e => e.status === 'upcoming' || e.status === 'ongoing').slice(0, 3);
+      const upGrid   = document.getElementById('upcomingGrid');
+
+      if (!upcoming.length) {
+        upGrid.innerHTML = `<div style="grid-column:1/-1;font-family:var(--font-mono);font-size:0.65rem;
+          color:rgba(255,255,255,0.25);letter-spacing:0.2em;padding:1rem 0">
+          WATCH THIS SPACE — EVENTS COMING SOON
+        </div>`;
+        document.getElementById('upcomingSubtitle').textContent = 'STAY TUNED FOR DATES';
+      } else {
+        document.getElementById('upcomingSubtitle').textContent = `${upcoming.length} EVENT${upcoming.length>1?'S':''} COMING UP`;
+        upGrid.innerHTML = upcoming.map(e => {
+          const bc  = catBadge[e.category] || 'badge-info';
+          const regBadge = e.registration_open
+            ? `<span class="badge badge-tech">REGISTRATION OPEN</span>` : '';
+          return `
+          <div class="upcoming-card reveal">
+            <div class="upcoming-date">${fmtDate(e.date)}${e.time ? ' · ' + e.time : ''}</div>
+            <h3>${e.title}</h3>
+            <p>${e.description || ''}</p>
+            <div class="upcoming-meta">
+              <span class="badge ${bc}">${(e.category||'').toUpperCase()}</span>
+              ${e.type ? `<span class="badge ${bc}">${e.type.toUpperCase()}</span>` : ''}
+              ${e.duration ? `<span class="badge ${bc}">${e.duration.toUpperCase()}</span>` : ''}
+              ${regBadge}
+            </div>
+            ${e.venue ? `<div style="margin-top:0.75rem;font-family:var(--font-mono);font-size:0.6rem;color:rgba(255,255,255,0.3);letter-spacing:0.15em">
+              <i class="fas fa-map-marker-alt" style="color:var(--accent);margin-right:0.4rem"></i>${e.venue}
+            </div>` : ''}
+          </div>`;
+        }).join('');
+      }
+
+      renderEventsList();
+    }
+
+    function renderEventsList() {
+      const container = document.getElementById('eventsListContainer');
+      let list = allEvents;
+      if (activeFilter !== 'all') list = list.filter(e => e.category === activeFilter);
+
+      if (!list.length) {
+        container.innerHTML = `<div style="text-align:center;padding:3rem;font-family:var(--font-mono);
+          font-size:0.65rem;color:rgba(255,255,255,0.25);letter-spacing:0.2em">
+          NO EVENTS IN THIS CATEGORY YET
+        </div>`;
+        return;
+      }
+
+      const statusColor = { upcoming:'var(--accent)', ongoing:'#4dff91', completed:'rgba(255,255,255,0.25)' };
+
+      container.innerHTML = list.map((e, i) => {
+        const bc = catBadge[e.category] || 'badge-info';
+        return `
+        <div class="event-row reveal" data-category="${e.category || 'technical'}">
+          <div class="event-row-num">${String(i+1).padStart(2,'0')}</div>
+          <div class="event-row-body">
+            <h3>${e.title}
+              <span style="font-family:var(--font-mono);font-size:0.55rem;
+                letter-spacing:0.15em;color:${statusColor[e.status]||'var(--muted)'};
+                margin-left:0.75rem;font-weight:400">
+                ${(e.status||'').toUpperCase()}
+              </span>
+            </h3>
+            <p>${e.description || ''}</p>
+            ${e.date || e.venue ? `
+            <div style="margin-top:0.6rem;font-family:var(--font-mono);font-size:0.58rem;
+              color:rgba(255,255,255,0.3);letter-spacing:0.15em;display:flex;gap:1.5rem;flex-wrap:wrap">
+              ${e.date ? `<span><i class="fas fa-calendar-alt" style="color:var(--accent);margin-right:0.35rem"></i>${fmtDate(e.date)}</span>` : ''}
+              ${e.venue ? `<span><i class="fas fa-map-marker-alt" style="color:var(--accent);margin-right:0.35rem"></i>${e.venue}</span>` : ''}
+              ${e.prize_pool ? `<span><i class="fas fa-trophy" style="color:var(--accent);margin-right:0.35rem"></i>${e.prize_pool}</span>` : ''}
+            </div>` : ''}
+          </div>
+          <div class="event-row-tags">
+            <span class="badge ${bc}">${(e.category||'').toUpperCase()}</span>
+            ${e.type ? `<span class="badge ${bc}">${e.type.toUpperCase()}</span>` : ''}
+            ${e.duration ? `<span class="badge ${bc}">${e.duration}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+
+      // Reattach reveal observer
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => entry.target.classList.add('visible'), i * 60);
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.05 });
+      container.querySelectorAll('.event-row.reveal').forEach(el => obs.observe(el));
+    }
+
+    // Filter
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        renderEventsList();
+      });
+    });
+
+    loadEvents();
+  </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Login — Evalanche Club</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      padding: 2rem;
+    }
+
+    .auth-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: color 0.3s;
+    }
+    .auth-back:hover { color: var(--accent); }
+
+    .auth-card {
+      background: rgba(13,17,23,0.9);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3rem 2.5rem;
+      backdrop-filter: blur(30px);
+    }
+
+    .auth-logo {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 12px rgba(77,240,255,0.4));
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-card h1 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+
+    .auth-card .auth-sub {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.2);
+      font-size: 0.85rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.85rem 1rem 0.85rem 2.6rem;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .form-group input::placeholder { color: rgba(255,255,255,0.2); }
+    .form-group input:focus { border-color: var(--accent); background: rgba(77,240,255,0.03); }
+
+    .auth-submit {
+      width: 100%;
+      padding: 1rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 0.5rem;
+    }
+
+    .auth-submit:hover { box-shadow: 0 0 25px rgba(77,240,255,0.4); }
+
+    .auth-divider {
+      text-align: center;
+      margin: 1.5rem 0;
+      position: relative;
+    }
+
+    .auth-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .auth-divider span {
+      background: rgba(13,17,23,0.9);
+      padding: 0 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.3);
+      position: relative;
+    }
+
+    .auth-switch {
+      text-align: center;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .auth-switch a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .auth-switch a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="auth-container">
+    <a href="index.html" class="auth-back"><i class="fas fa-arrow-left"></i> BACK TO HOME</a>
+
+    <div class="auth-card">
+      <img src="assets/images/logo.png" alt="Evalanche" class="auth-logo">
+      <h1>Welcome back</h1>
+      <p class="auth-sub">Sign in with your Virtual ID to access your Evalanche member dashboard.</p>
+
+      <form>
+        <div class="form-group">
+          <label>Virtual ID</label>
+          <div class="input-wrap">
+            <i class="fas fa-id-card"></i>
+            <input type="text" placeholder="Enter your Virtual ID" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="fas fa-lock"></i>
+            <input type="password" placeholder="••••••••" required>
+          </div>
+        </div>
+        <button type="submit" class="auth-submit">Sign In →</button>
+      </form>
+
+      <div class="auth-divider"><span>OR</span></div>
+
+      <p class="auth-switch">Don't have an account? <a href="signup.html">Sign up here</a></p>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

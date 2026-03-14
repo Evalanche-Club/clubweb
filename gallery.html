@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gallery — Evalanche Club</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ===== FILTER BAR ===== */
+    .gallery-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 1.5rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+    }
+
+    .gallery-filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .gal-filter-btn {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.45rem 1rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .gal-filter-btn:hover,
+    .gal-filter-btn.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .gallery-count {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.25);
+    }
+
+    .gallery-count span { color: var(--accent); }
+
+    /* ===== MASONRY GRID ===== */
+    .masonry-grid {
+      columns: 3;
+      column-gap: 1rem;
+    }
+
+    .masonry-item {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+      border-radius: 3px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    .masonry-item:hover { border-color: rgba(77,240,255,0.3); }
+
+    /* Placeholder colored blocks representing photos */
+    .masonry-placeholder {
+      width: 100%;
+      display: block;
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.4s ease;
+    }
+
+    .masonry-item:hover .masonry-placeholder { transform: scale(1.03); }
+
+    .masonry-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%);
+      opacity: 0;
+      transition: opacity 0.35s;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.2rem;
+    }
+
+    .masonry-item:hover .masonry-overlay { opacity: 1; }
+
+    .masonry-overlay-title {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .masonry-overlay-tag {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.25em;
+      color: var(--accent);
+    }
+
+    .masonry-overlay-zoom {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 32px;
+      height: 32px;
+      background: rgba(77,240,255,0.15);
+      border: 1px solid rgba(77,240,255,0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 0.7rem;
+    }
+
+    .masonry-item.hidden {
+      display: none;
+    }
+
+    /* Real images from Supabase */
+    .masonry-real-img {
+      width: 100%;
+      display: block;
+      border-radius: 2px;
+      transition: transform 0.4s ease;
+    }
+    .masonry-item:hover .masonry-real-img { transform: scale(1.03); }
+
+    /* ===== LIGHTBOX ===== */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(4,6,10,0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .lightbox.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .lightbox-inner {
+      position: relative;
+      max-width: 900px;
+      width: 90vw;
+      transform: scale(0.94);
+      transition: transform 0.3s;
+    }
+
+    .lightbox.open .lightbox-inner { transform: scale(1); }
+
+    .lightbox-visual {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .lightbox-caption {
+      padding: 1.2rem 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .lightbox-caption-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .lightbox-caption-meta {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: -3rem;
+      right: 0;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.4rem 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .lightbox-close:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(77,240,255,0.08);
+      border: 1px solid rgba(77,240,255,0.2);
+      color: var(--accent);
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+
+    .lightbox-nav:hover { background: rgba(77,240,255,0.2); }
+    .lightbox-nav.prev { left: -3.5rem; }
+    .lightbox-nav.next { right: -3.5rem; }
+
+    /* ===== UPLOAD CTA ===== */
+    .gallery-upload-cta {
+      margin: 4rem 0;
+      border: 1px dashed rgba(77,240,255,0.2);
+      border-radius: 4px;
+      padding: 2.5rem;
+      text-align: center;
+      background: rgba(77,240,255,0.02);
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .gallery-upload-cta:hover {
+      border-color: rgba(77,240,255,0.4);
+      background: rgba(77,240,255,0.04);
+    }
+
+    .gallery-upload-cta i {
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      opacity: 0.5;
+      display: block;
+    }
+
+    .gallery-upload-cta h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .gallery-upload-cta p {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 800px) {
+      .masonry-grid { columns: 2; }
+      .lightbox-nav.prev { left: -1rem; }
+      .lightbox-nav.next { right: -1rem; }
+    }
+
+    @media (max-width: 500px) {
+      .masonry-grid { columns: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
+      <span class="nav-name">EVALANCHE</span>
+    </a>
+    <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="gallery.html" class="active">Gallery</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="login.html" class="nav-cta">Member Login</a></li>
+    </ul>
+  </nav>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="page-header">
+    <span class="page-header-eyebrow">Moments & Memories</span>
+    <h1>Gallery</h1>
+    <p>Behind the scenes, on stage, and in the lab — documented.</p>
+  </div>
+
+  <main class="container" style="padding-bottom: 6rem;">
+
+    <!-- CONTROLS -->
+    <div class="gallery-controls">
+      <div class="gallery-filters">
+        <button class="gal-filter-btn active" data-filter="all">All</button>
+        <button class="gal-filter-btn" data-filter="hackathon">Hackathon</button>
+        <button class="gal-filter-btn" data-filter="technical">Technical</button>
+        <button class="gal-filter-btn" data-filter="cultural">Cultural</button>
+        <button class="gal-filter-btn" data-filter="workshop">Workshop</button>
+        <button class="gal-filter-btn" data-filter="team">Team</button>
+      </div>
+      <div class="gallery-count">Showing <span id="galCount">18</span> photos</div>
+    </div>
+
+    <!-- MASONRY GRID — loaded dynamically from Supabase -->
+    <div class="masonry-grid" id="masonryGrid">
+      <!-- photos injected by JS -->
+    </div>
+
+    <!-- UPLOAD CTA -->
+    <div class="gallery-upload-cta">
+      <i class="fas fa-camera-retro"></i>
+      <h3>Got photos from our events?</h3>
+      <p>Members can contribute photos to the gallery. <a href="contact.html" style="color: var(--accent); text-decoration: none;">Contact us</a> to submit your shots.</p>
+    </div>
+
+  </main>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-inner">
+      <button class="lightbox-close" onclick="closeLightbox()">ESC / CLOSE</button>
+      <button class="lightbox-nav prev" onclick="lightboxNav(-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="lightbox-nav next" onclick="lightboxNav(1)"><i class="fas fa-chevron-right"></i></button>
+      <div class="lightbox-visual" id="lightboxVisual"></div>
+      <div class="lightbox-caption">
+        <div class="lightbox-caption-title" id="lightboxTitle"></div>
+        <div class="lightbox-caption-meta" id="lightboxMeta"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/images/logo.png" alt="Evalanche" class="footer-logo">
+        <p class="footer-tagline">EVALANCHE CLUB</p>
+        <p class="footer-sub">Dept. of ECE, Jain (Deemed-to-be) University</p>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Navigate</p>
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="about.html">About</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Account</p>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <p>© 2025 Evalanche Club — Dept. of ECE, Jain (Deemed-to-be) University. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="main.js"></script>
+  <script>
+    // ===== SUPABASE GALLERY LOADER =====
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    let allPhotos = [];
+    let activeFilter = 'all';
+
+    async function loadGallery() {
+      const grid    = document.getElementById('masonryGrid');
+      const countEl = document.getElementById('galCount');
+
+      // Show loading state
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,0.3);font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.2em;">LOADING GALLERY…</div>`;
+
+      const { data, error } = await db
+        .from('gallery')
+        .select('*')
+        .eq('visible', true)
+        .order('created_at', { ascending: false });
+
+      if (error || !data) {
+        // Supabase not configured yet — show placeholder state
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,0.3);">
+          <i class="fas fa-images" style="font-size:2rem;display:block;margin-bottom:1rem;opacity:0.2"></i>
+          <p style="font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:0.2em">
+            NO PHOTOS YET — ADD THEM FROM THE ADMIN PANEL
+          </p></div>`;
+        countEl.textContent = '0';
+        return;
+      }
+
+      allPhotos = data;
+      renderGallery();
+    }
+
+    function renderGallery() {
+      const grid    = document.getElementById('masonryGrid');
+      const countEl = document.getElementById('galCount');
+
+      let list = allPhotos;
+      if (activeFilter !== 'all') list = list.filter(p => p.category === activeFilter);
+
+      countEl.textContent = list.length;
+
+      if (!list.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,0.3);font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:0.2em;">
+          NO PHOTOS IN THIS CATEGORY YET
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map((photo, i) => `
+        <div class="masonry-item reveal"
+          data-category="${photo.category || 'general'}"
+          data-title="${escHtml(photo.title)}"
+          data-meta="${(photo.category || 'general').toUpperCase()}${photo.year ? ' · ' + photo.year : ''}">
+          <img
+            src="${photo.image_url}"
+            alt="${escHtml(photo.title)}"
+            class="masonry-real-img"
+            loading="lazy"
+            onerror="this.parentElement.style.display='none'">
+          <div class="masonry-overlay">
+            <div class="masonry-overlay-title">${escHtml(photo.title)}</div>
+            <div class="masonry-overlay-tag">${(photo.event_name || photo.category || '').toUpperCase()}${photo.year ? ' · ' + photo.year : ''}</div>
+            <div class="masonry-overlay-zoom"><i class="fas fa-expand-alt"></i></div>
+          </div>
+        </div>
+      `).join('');
+
+      // Re-attach lightbox and reveal listeners after render
+      attachListeners();
+    }
+
+    function escHtml(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ===== FILTER =====
+    const filterBtns = document.querySelectorAll('.gal-filter-btn');
+    const countEl    = document.getElementById('galCount');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        renderGallery();
+      });
+    });
+
+    // ===== LIGHTBOX =====
+    let visibleItems = [];
+    let currentIdx   = 0;
+
+    function openLightbox(el) {
+      visibleItems = Array.from(document.querySelectorAll('.masonry-item:not(.hidden)'));
+      currentIdx   = visibleItems.indexOf(el);
+      renderLightbox();
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function lightboxNav(dir) {
+      currentIdx = (currentIdx + dir + visibleItems.length) % visibleItems.length;
+      renderLightbox();
+    }
+
+    function renderLightbox() {
+      const item  = visibleItems[currentIdx];
+      const img   = item.querySelector('.masonry-real-img');
+      const visual = document.getElementById('lightboxVisual');
+
+      visual.innerHTML = '';
+      visual.style.cssText = '';
+      visual.style.aspectRatio = '16/9';
+      visual.style.borderRadius = '4px';
+      visual.style.overflow = 'hidden';
+      visual.style.background = '#080c10';
+      visual.style.display = 'flex';
+      visual.style.alignItems = 'center';
+      visual.style.justifyContent = 'center';
+
+      if (img && img.src) {
+        const fullImg = document.createElement('img');
+        fullImg.src   = img.src;
+        fullImg.alt   = item.dataset.title || '';
+        fullImg.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+        visual.appendChild(fullImg);
+      }
+
+      document.getElementById('lightboxTitle').textContent = item.dataset.title || '';
+      document.getElementById('lightboxMeta').textContent  = item.dataset.meta  || '';
+    }
+
+    function attachListeners() {
+      // Reveal
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach((e, i) => {
+          if (e.isIntersecting) {
+            setTimeout(() => e.target.classList.add('visible'), i * 60);
+            observer.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.08 });
+      document.querySelectorAll('.masonry-item.reveal').forEach(el => observer.observe(el));
+
+      // Lightbox click
+      document.querySelectorAll('.masonry-item').forEach(item => {
+        item.addEventListener('click', () => openLightbox(item));
+      });
+    }
+
+    // Close on backdrop
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+      if (e.target === this) closeLightbox();
+    });
+
+    // Keyboard nav
+    document.addEventListener('keydown', e => {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (e.key === 'Escape')      closeLightbox();
+      if (e.key === 'ArrowRight')  lightboxNav(1);
+      if (e.key === 'ArrowLeft')   lightboxNav(-1);
+    });
+
+    // Boot
+    loadGallery();
+  </script>
+</body>
+</html>

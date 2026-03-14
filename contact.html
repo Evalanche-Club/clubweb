@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — Evalanche Club</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 6rem;
+      padding: 5rem 0;
+      align-items: start;
+    }
+
+    .contact-info h2 {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+    }
+
+    .contact-info p {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+    }
+
+    .contact-detail-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .contact-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(77,240,255,0.08);
+      border: 1px solid rgba(77,240,255,0.2);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .contact-detail-text strong {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+
+    .contact-detail-text span {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    /* FORM */
+    .contact-form {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2.5rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.85rem 1rem;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.3s, background 0.3s;
+      -webkit-appearance: none;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.2);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+      background: rgba(77,240,255,0.03);
+    }
+
+    .form-group select option { background: #0d1117; color: #fff; }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 130px;
+    }
+
+    .form-submit {
+      width: 100%;
+      padding: 1rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 0.5rem;
+    }
+
+    .form-submit:hover {
+      box-shadow: 0 0 25px rgba(77,240,255,0.4);
+      opacity: 0.9;
+    }
+
+    .form-note {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.25);
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    #formSuccess {
+      display: none;
+      background: rgba(77,240,255,0.08);
+      border: 1px solid rgba(77,240,255,0.3);
+      border-radius: 4px;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    #formSuccess i {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    #formSuccess h3 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    #formSuccess p {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+      .contact-layout { grid-template-columns: 1fr; gap: 3rem; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
+      <span class="nav-name">EVALANCHE</span>
+    </a>
+    <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+      <li><a href="login.html" class="nav-cta">Member Login</a></li>
+    </ul>
+  </nav>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="page-header">
+    <span class="page-header-eyebrow">Reach Out</span>
+    <h1>Get in<br>Touch</h1>
+    <p>Questions, collaboration, or just want to join? We'd love to hear from you.</p>
+  </div>
+
+  <main class="container">
+    <div class="contact-layout">
+
+      <div class="contact-info reveal">
+        <h2>Let's connect and build something together</h2>
+        <p>Whether you're a student looking to join, a company seeking to collaborate, or anyone with a question — drop us a message.</p>
+
+        <div class="contact-detail-item">
+          <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="contact-detail-text">
+            <strong>Location</strong>
+            <span>Dept. of ECE, Jain (Deemed-to-be) University, Bengaluru</span>
+          </div>
+        </div>
+
+        <div class="contact-detail-item">
+          <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+          <div class="contact-detail-text">
+            <strong>Email</strong>
+            <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="debba8bfb2bfb0bdb6bb9eb4bfb7b0abb0b7a8bbacadb7aaa7f0bfbdf0b7b0">[email&#160;protected]</a></span>
+          </div>
+        </div>
+
+        <div class="contact-detail-item">
+          <div class="contact-icon"><i class="fab fa-instagram"></i></div>
+          <div class="contact-detail-text">
+            <strong>Instagram</strong>
+            <span>@evalanche_club</span>
+          </div>
+        </div>
+
+        <div class="contact-detail-item">
+          <div class="contact-icon"><i class="fab fa-linkedin"></i></div>
+          <div class="contact-detail-text">
+            <strong>LinkedIn</strong>
+            <span>Evalanche Club</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form reveal" id="contactFormWrapper">
+        <p style="font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 1.5rem;">SEND A MESSAGE</p>
+
+        <div id="formSuccess">
+          <i class="fas fa-check-circle"></i>
+          <h3>Message Sent!</h3>
+          <p>We'll get back to you as soon as possible. Thank you for reaching out to Evalanche Club.</p>
+        </div>
+
+        <form id="contactForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" placeholder="Arjun" required>
+            </div>
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" placeholder="Kumar">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" placeholder="arjun@jainuniversity.ac.in" required>
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select>
+              <option value="">Select a topic...</option>
+              <option>Joining the Club</option>
+              <option>Event Enquiry</option>
+              <option>Collaboration / Sponsorship</option>
+              <option>General Question</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea placeholder="Write your message here..."></textarea>
+          </div>
+          <button type="submit" class="form-submit">Send Message →</button>
+          <p class="form-note">We typically respond within 24–48 hours.</p>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/images/logo.png" alt="Evalanche" class="footer-logo">
+        <p class="footer-tagline">EVALANCHE CLUB</p>
+        <p class="footer-sub">Dept. of ECE, Jain (Deemed-to-be) University</p>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Navigate</p>
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Account</p>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <p>© 2025 Evalanche Club — Dept. of ECE, Jain (Deemed-to-be) University. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="main.js"></script>
+  <script>
+    document.getElementById('contactForm').a

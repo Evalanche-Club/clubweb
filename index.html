@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evalanche Club — ECE, Jain University</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ===== HERO ===== */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.3s forwards;
+    }
+
+    .hero-logo {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 30px rgba(77,240,255,0.6));
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.5s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(3.5rem, 9vw, 8rem);
+      font-weight: 800;
+      line-height: 0.9;
+      color: #fff;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.7s forwards;
+    }
+
+    .hero-title .highlight {
+      color: var(--accent);
+      display: block;
+      -webkit-text-stroke: 2px var(--accent);
+      color: transparent;
+    }
+
+    .hero-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.9s forwards;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 1.1s forwards;
+    }
+
+    .btn-primary {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.9rem 2.2rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.2);
+      transform: translateX(-101%);
+      transition: transform 0.3s ease;
+    }
+
+    .btn-primary:hover::after { transform: translateX(0); }
+    .btn-primary:hover { box-shadow: 0 0 30px rgba(77,240,255,0.5); }
+
+    .btn-ghost {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.9rem 2.2rem;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(77,240,255,0.1);
+      box-shadow: 0 0 20px rgba(77,240,255,0.2);
+    }
+
+    .hero-scroll-indicator {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 1.5s forwards;
+    }
+
+    .hero-scroll-indicator span {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.1); }
+    }
+
+    /* ===== STATS STRIP ===== */
+    .stats-strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(20px);
+    }
+
+    .stat-item {
+      padding: 2.5rem 2rem;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-item:hover { background: rgba(77,240,255,0.04); }
+
+    .stat-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+    }
+
+    /* ===== INTRO SECTION ===== */
+    .intro-section {
+      padding: 8rem 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: center;
+    }
+
+    .intro-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .intro-label::before {
+      content: '';
+      width: 30px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .intro-heading {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+
+    .intro-body {
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      line-height: 1.9;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .vm-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .vm-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+
+    .vm-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.4s ease;
+    }
+
+    .vm-card:hover::before { transform: scaleY(1); }
+    .vm-card:hover { border-color: rgba(77,240,255,0.3); background: rgba(77,240,255,0.04); }
+
+    .vm-card-icon {
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .vm-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+
+    .vm-card p {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.55);
+    }
+
+    /* ===== EVENTS PREVIEW ===== */
+    .events-preview {
+      padding: 6rem 0;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 3rem;
+    }
+
+    .section-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title-lg {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .see-all-link {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: gap 0.3s;
+    }
+
+    .see-all-link:hover { gap: 1.25rem; }
+
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .event-tile {
+      background: var(--bg);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      cursor: pointer;
+    }
+
+    .event-tile::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      width: 0;
+      background: var(--accent);
+      transition: width 0.4s ease;
+    }
+
+    .event-tile:hover::after { width: 100%; }
+    .event-tile:hover { background: rgba(77,240,255,0.04); }
+
+    .event-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.2);
+      margin-bottom: 1.5rem;
+    }
+
+    .event-icon {
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .event-tile h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+
+    .event-tile p {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .event-meta {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .event-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid rgba(77,240,255,0.3);
+      color: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* ===== MARQUEE ===== */
+    .marquee-section {
+      padding: 3rem 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      background: rgba(0,0,0,0.4);
+    }
+
+    .marquee-track {
+      display: flex;
+      white-space: nowrap;
+      animation: marquee 25s linear infinite;
+    }
+
+    .marquee-item {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      font-weight: 800;
+      padding: 0 2.5rem;
+      color: rgba(255,255,255,0.08);
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .marquee-item.accent { color: var(--accent); opacity: 0.4; }
+
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ===== CTA SECTION ===== */
+    .cta-section {
+      padding: 8rem 0;
+      text-align: center;
+      position: relative;
+    }
+
+    .cta-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(77,240,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .cta-heading {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+
+    .cta-heading em {
+      font-style: normal;
+      -webkit-text-stroke: 1px rgba(77,240,255,0.6);
+      color: transparent;
+    }
+
+    .cta-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.5);
+      max-width: 500px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+
+    /* ===== OSCILLOSCOPE SECTION ===== */
+    .oscilloscope-section {
+      padding: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.55);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .oscilloscope-header {
+      position: absolute;
+      top: 1.2rem;
+      left: 1.8rem;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+
+    .osc-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: rgba(77,240,255,0.5);
+    }
+
+    .osc-sep { opacity: 0.25; }
+
+    .osc-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: oscPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes oscPulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(77,240,255,0.4); }
+      50%       { opacity: 0.4; box-shadow: 0 0 0 4px rgba(77,240,255,0); }
+    }
+
+    /* Waveform selector buttons */
+    .osc-wave-selector {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      z-index: 2;
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .osc-wave-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.52rem;
+      letter-spacing: 0.18em;
+      padding: 0.35rem 0.75rem;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(77,240,255,0.12);
+      border-radius: 2px;
+      color: rgba(77,240,255,0.4);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .osc-wave-btn:hover {
+      border-color: rgba(77,240,255,0.4);
+      color: rgba(77,240,255,0.8);
+      background: rgba(77,240,255,0.05);
+    }
+
+    .osc-wave-btn.active {
+      background: rgba(77,240,255,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 8px rgba(77,240,255,0.15);
+    }
+
+    #oscilloscopeCanvas {
+      display: block;
+      width: 100%;
+      height: 200px;
+    }
+
+    @media (max-width: 600px) {
+      .osc-wave-selector { position: static; padding: 0.75rem 1rem 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+      .oscilloscope-header { position: static; padding: 0.75rem 1rem 0; }
+      .oscilloscope-section { padding-bottom: 0; }
+      #oscilloscopeCanvas { height: 140px; }
+    }
+
+    /* ===== TIMELINE SECTION ===== */
+    .timeline-section {
+      padding: 7rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .timeline {
+      position: relative;
+      margin-top: 3rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 2rem;
+      padding: 0 0 3.5rem 2rem;
+      position: relative;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: 6px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--accent);
+      transition: background 0.3s;
+    }
+
+    .timeline-item:hover::before { background: var(--accent); }
+
+    .timeline-year {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      padding-top: 4px;
+    }
+
+    .timeline-body h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+
+    .timeline-body p {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .timeline-body .tl-tag {
+      display: inline-block;
+      margin-top: 0.75rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid rgba(77,240,255,0.25);
+      color: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonials-section {
+      padding: 6rem 0;
+      border-top: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .testimonials-ticker {
+      position: relative;
+      margin-top: 3rem;
+    }
+
+    .testimonials-track {
+      display: flex;
+      gap: 1.5rem;
+      animation: testimonialScroll 40s linear infinite;
+      width: max-content;
+    }
+
+    .testimonials-track:hover { animation-play-state: paused; }
+
+    @keyframes testimonialScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .testimonial-card {
+      width: 340px;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      transition: border-color 0.3s;
+    }
+
+    .testimonial-card:hover { border-color: rgba(77,240,255,0.25); }
+
+    .testimonial-quote {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 1.5rem;
+      font-style: italic;
+    }
+
+    .testimonial-quote::before {
+      content: '"';
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      color: var(--accent);
+      line-height: 0;
+      vertical-align: -0.5rem;
+      margin-right: 0.2rem;
+      font-style: normal;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .testimonial-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(77,240,255,0.1);
+      border: 1px solid rgba(77,240,255,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .testimonial-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .testimonial-role {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Fade edges on testimonials */
+    .testimonials-ticker::before,
+    .testimonials-ticker::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 120px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .testimonials-ticker::before {
+      left: 0;
+      background: linear-gradient(to right, var(--bg), transparent);
+    }
+
+    .testimonials-ticker::after {
+      right: 0;
+      background: linear-gradient(to left, var(--bg), transparent);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .intro-section { grid-template-columns: 1fr; gap: 3rem; }
+      .stats-strip { grid-template-columns: repeat(2, 1fr); }
+      .stat-item:nth-child(2) { border-right: none; }
+      .events-grid { grid-template-columns: 1fr; }
+      .section-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-title { font-size: 3rem; }
+      .stats-strip { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
+      <span class="nav-name">EVALANCHE</span>
+    </a>
+    <button class="nav-hamburger" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="login.html" class="nav-cta">Member Login</a></li>
+    </ul>
+  </nav>
+
+  <!-- CANVAS BG -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="hero-eyebrow">Dept. of Electronics & Communication Engineering — Jain University</span>
+    <img src="assets/images/logo.png" alt="Evalanche Club Logo" class="hero-logo">
+    <h1 class="hero-title">
+      Evalanche
+      <span class="highlight">Club</span>
+    </h1>
+    <p class="hero-sub">For the students · By the students · Since 2020</p>
+    <div class="hero-cta-group">
+      <a href="events.html" class="btn-primary">Explore Events</a>
+      <a href="about.html" class="btn-ghost">About Us</a>
+    </div>
+    <div class="hero-scroll-indicator">
+      <span>SCROLL</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="stat-item">
+      <div class="stat-number" data-target="500">0</div>
+      <div class="stat-label">Active Members</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="40">0</div>
+      <div class="stat-label">Events / Year</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="12">0</div>
+      <div class="stat-label">Technical Domains</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="5">0</div>
+      <div class="stat-label">Years Strong</div>
+    </div>
+  </div>
+
+  <!-- MARQUEE -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span class="marquee-item">INNOVATHON</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">CIRCUIT DEBUGGING</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">HACKATHON</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">PAPER PRESENTATION</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">TECH QUIZ</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">CULTURAL EVENTS</span>
+      <span class="marquee-item accent">✦</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="marquee-item">INNOVATHON</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">CIRCUIT DEBUGGING</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">HACKATHON</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">PAPER PRESENTATION</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">TECH QUIZ</span>
+      <span class="marquee-item accent">✦</span>
+      <span class="marquee-item">CULTURAL EVENTS</span>
+      <span class="marquee-item accent">✦</span>
+    </div>
+  </div>
+
+  <!-- OSCILLOSCOPE: ECE signal identity section -->
+  <div class="oscilloscope-section">
+    <div class="oscilloscope-header">
+      <div class="osc-dot"></div>
+      <span class="osc-label" id="oscWaveLabel">SINE</span>
+      <span class="osc-label osc-sep">|</span>
+      <span class="osc-label" id="oscFreqLabel">f = 1.0 kHz</span>
+    </div>
+    <div class="osc-wave-selector">
+      <button class="osc-wave-btn active" data-wave="sine"     onclick="setOscWave('sine')">SINE</button>
+      <button class="osc-wave-btn"        data-wave="square"   onclick="setOscWave('square')">SQUARE</button>
+      <button class="osc-wave-btn"        data-wave="triangle" onclick="setOscWave('triangle')">TRIANGLE</button>
+      <button class="osc-wave-btn"        data-wave="sawtooth" onclick="setOscWave('sawtooth')">SAWTOOTH</button>
+      <button class="osc-wave-btn"        data-wave="am"       onclick="setOscWave('am')">AM MOD</button>
+      <button class="osc-wave-btn"        data-wave="pwm"      onclick="setOscWave('pwm')">PWM</button>
+    </div>
+    <canvas id="oscilloscopeCanvas"></canvas>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="container">
+
+    <!-- INTRO -->
+    <div class="intro-section">
+      <div>
+        <p class="intro-label">Who We Are</p>
+        <h2 class="intro-heading">A community built on curiosity & code</h2>
+        <p class="intro-body">
+          The Evalanche Club is the student-led technical and cultural hub of the Department of Electronics and Communication Engineering at Jain (Deemed-to-be) University. We bridge the gap between classroom knowledge and real-world innovation — through hackathons, seminars, workshops, and competitions that push boundaries.
+        </p>
+        <br>
+        <a href="about.html" class="btn-ghost" style="display:inline-flex; align-items: center; gap: 0.75rem; margin-top: 1rem;">
+          Our Full Story <i class="fas fa-arrow-right" style="font-size: 0.7rem;"></i>
+        </a>
+      </div>
+      <div class="vm-grid">
+        <div class="vm-card">
+          <div class="vm-card-icon"><i class="fas fa-eye"></i></div>
+          <h3>Vision</h3>
+          <p>To create a platform where students explore, learn, and showcase their talents — bridging theoretical knowledge with practical application and nurturing the next generation of ECE innovators.</p>
+        </div>
+        <div class="vm-card">
+          <div class="vm-card-icon"><i class="fas fa-rocket"></i></div>
+          <h3>Mission</h3>
+          <p>Enhance technical skills, develop soft skills, foster cultural awareness, encourage networking, and provide a platform for holistic personal and professional growth.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTS PREVIEW -->
+    <div class="events-preview">
+      <div class="section-header">
+        <div>
+          <p class="section-tag">What We Do</p>
+          <h2 class="section-title-lg">Flagship Events</h2>
+        </div>
+        <a href="events.html" class="see-all-link">VIEW ALL EVENTS <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <div class="events-grid">
+        <div class="event-tile">
+          <div class="event-num">01</div>
+          <i class="fas fa-lightbulb event-icon"></i>
+          <h3>Innovathon</h3>
+          <p>An 8-hour innovation challenge where teams tackle real-world problem statements with creative, out-of-the-box solutions under time pressure.</p>
+          <div class="event-meta">
+            <span class="event-tag">TEAM</span>
+            <span class="event-tag">8 HRS</span>
+          </div>
+        </div>
+        <div class="event-tile">
+          <div class="event-num">02</div>
+          <i class="fas fa-microchip event-icon"></i>
+          <h3>Circuit Debugging</h3>
+          <p>Test your troubleshooting skills by identifying and fixing faults in live electronic circuits. Sharpen your hands-on ECE knowledge.</p>
+          <div class="event-meta">
+            <span class="event-tag">INDIVIDUAL</span>
+            <span class="event-tag">TECHNICAL</span>
+          </div>
+        </div>
+        <div class="event-tile">
+          <div class="event-num">03</div>
+          <i class="fas fa-code event-icon"></i>
+          <h3>Hackathon</h3>
+          <p>Build, break, and ship. An intense coding marathon where ideas become prototypes and prototypes become solutions.</p>
+          <div class="event-meta">
+            <span class="event-tag">TEAM</span>
+            <span class="event-tag">24 HRS</span>
+          </div>
+        </div>
+        <div class="event-tile">
+          <div class="event-num">04</div>
+          <i class="fas fa-scroll event-icon"></i>
+          <h3>Paper Presentation</h3>
+          <p>Present your research and ideas to an expert panel. Develop your technical communication and academic writing skills.</p>
+          <div class="event-meta">
+            <span class="event-tag">INDIVIDUAL</span>
+            <span class="event-tag">RESEARCH</span>
+          </div>
+        </div>
+        <div class="event-tile">
+          <div class="event-num">05</div>
+          <i class="fas fa-brain event-icon"></i>
+          <h3>Tech Quiz</h3>
+          <p>A fast-paced quiz covering electronics, communications, emerging tech and general engineering — trivia meets intellect.</p>
+          <div class="event-meta">
+            <span class="event-tag">TEAM</span>
+            <span class="event-tag">2 HRS</span>
+          </div>
+        </div>
+        <div class="event-tile">
+          <div class="event-num">06</div>
+          <i class="fas fa-music event-icon"></i>
+          <h3>Cultural Events</h3>
+          <p>Celebrate talent beyond tech — talent shows, cultural days, sports events, and social service activities that round out the Evalanche experience.</p>
+          <div class="event-meta">
+            <span class="event-tag">OPEN</span>
+            <span class="event-tag">CULTURAL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="timeline-section">
+      <div style="display:flex; align-items:baseline; gap: 1.5rem;">
+        <div>
+          <p class="section-tag">Our Journey</p>
+          <h2 class="section-title-lg">Club Timeline</h2>
+        </div>
+      </div>
+      <div class="timeline">
+        <div class="timeline-item reveal">
+          <div class="timeline-year">2020</div>
+          <div class="timeline-body">
+            <h3>Evalanche Club Founded</h3>
+            <p>The club was established by a group of ECE students and faculty at Jain University with a vision to build a student-first engineering community from the ground up.</p>
+            <span class="tl-tag">FOUNDING</span>
+          </div>
+        </div>
+        <div class="timeline-item reveal">
+          <div class="timeline-year">2021</div>
+          <div class="timeline-body">
+            <h3>First Innovathon</h3>
+            <p>Launched our flagship 8-hour innovation challenge. Over 60 students across 15 teams participated in the inaugural edition, marking the start of a tradition.</p>
+            <span class="tl-tag">MILESTONE</span>
+          </div>
+        </div>
+        <div class="timeline-item reveal">
+          <div class="timeline-year">2022</div>
+          <div class="timeline-body">
+            <h3>24-Hour Hackathon & 200+ Members</h3>
+            <p>Scaled our biggest event to a 24-hour format and crossed the 200-member mark. Introduced the first inter-department cultural event and social service programme.</p>
+            <span class="tl-tag">GROWTH</span>
+          </div>
+        </div>
+        <div class="timeline-item reveal">
+          <div class="timeline-year">2023</div>
+          <div class="timeline-body">
+            <h3>Website Launch & Industry Workshops</h3>
+            <p>Launched our first digital presence and partnered with industry professionals for hands-on workshops in Embedded Systems, VLSI Design, and IoT.</p>
+            <span class="tl-tag">DIGITAL</span>
+          </div>
+        </div>
+        <div class="timeline-item reveal">
+          <div class="timeline-year">2024</div>
+          <div class="timeline-body">
+            <h3>500+ Members & Cloudflare-Hosted Site</h3>
+            <p>Crossed 500 active members, ran 40+ events in a single academic year, and migrated to a professional custom domain — this site you're on now.</p>
+            <span class="tl-tag">PRESENT</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TESTIMONIALS -->
+    <div class="testimonials-section">
+      <p class="section-tag">From Our Members</p>
+      <h2 class="section-title-lg">What Students Say</h2>
+
+      <div class="testimonials-ticker">
+        <div class="testimonials-track">
+          <!-- Set 1 -->
+          <div class="testimonial-card">
+            <p class="testimonial-quote">Evalanche gave me my first real taste of engineering outside the classroom. The Hackathon taught me more in 24 hours than a full semester of labs.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">RK</div>
+              <div>
+                <div class="testimonial-name">Rahul K.</div>
+                <div class="testimonial-role">3RD YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">I joined as a first-year with zero confidence. By second year I was presenting a paper in front of a judging panel. That shift happened because of this club.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">PS</div>
+              <div>
+                <div class="testimonial-name">Priya S.</div>
+                <div class="testimonial-role">2ND YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">The Circuit Debugging event was genuinely stressful — in the best way. It sharpened my hands-on skills more than anything else I've done here.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">AV</div>
+              <div>
+                <div class="testimonial-name">Aditya V.</div>
+                <div class="testimonial-role">4TH YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">Being on the core team changed how I think about leadership and communication. Evalanche is the best extracurricular decision I ever made.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">NM</div>
+              <div>
+                <div class="testimonial-name">Nisha M.</div>
+                <div class="testimonial-role">FORMER VICE PRESIDENT</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">The IoT workshop connected theory to real hardware in a way lectures never could. I built a working prototype on the same day — that feeling is unforgettable.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">SJ</div>
+              <div>
+                <div class="testimonial-name">Siddharth J.</div>
+                <div class="testimonial-role">2ND YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">Evalanche is proof that students don't need to wait for industry to give them opportunities. They create their own — every semester, every year.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">KR</div>
+              <div>
+                <div class="testimonial-name">Kavya R.</div>
+                <div class="testimonial-role">3RD YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <!-- Duplicate set for seamless scroll -->
+          <div class="testimonial-card">
+            <p class="testimonial-quote">Evalanche gave me my first real taste of engineering outside the classroom. The Hackathon taught me more in 24 hours than a full semester of labs.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">RK</div>
+              <div>
+                <div class="testimonial-name">Rahul K.</div>
+                <div class="testimonial-role">3RD YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">I joined as a first-year with zero confidence. By second year I was presenting a paper in front of a judging panel. That shift happened because of this club.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">PS</div>
+              <div>
+                <div class="testimonial-name">Priya S.</div>
+                <div class="testimonial-role">2ND YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">The Circuit Debugging event was genuinely stressful — in the best way. It sharpened my hands-on skills more than anything else I've done here.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">AV</div>
+              <div>
+                <div class="testimonial-name">Aditya V.</div>
+                <div class="testimonial-role">4TH YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">Being on the core team changed how I think about leadership and communication. Evalanche is the best extracurricular decision I ever made.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">NM</div>
+              <div>
+                <div class="testimonial-name">Nisha M.</div>
+                <div class="testimonial-role">FORMER VICE PRESIDENT</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">The IoT workshop connected theory to real hardware in a way lectures never could. I built a working prototype on the same day — that feeling is unforgettable.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">SJ</div>
+              <div>
+                <div class="testimonial-name">Siddharth J.</div>
+                <div class="testimonial-role">2ND YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p class="testimonial-quote">Evalanche is proof that students don't need to wait for industry to give them opportunities. They create their own — every semester, every year.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">KR</div>
+              <div>
+                <div class="testimonial-name">Kavya R.</div>
+                <div class="testimonial-role">3RD YEAR · ECE</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <div class="cta-glow"></div>
+      <p class="cta-eyebrow">Ready to Join?</p>
+      <h2 class="cta-heading">Be part of <em>something</em> bigger.</h2>
+      <p class="cta-sub">Connect with fellow ECE students, compete in events, and build skills that go beyond the syllabus.</p>
+      <div style="display:flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="contact.html" class="btn-primary">Get In Touch</a>
+        <a href="signup.html" class="btn-ghost">Create Account</a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/images/logo.png" alt="Evalanche" class="footer-logo">
+        <p class="footer-tagline">EVALANCHE CLUB</p>
+        <p class="footer-sub">Dept. of ECE, Jain (Deemed-to-be) University</p>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Navigate</p>
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="about.html">About</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Account</p>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <p>© 2025 Evalanche Club — Dept. of ECE, Jain (Deemed-to-be) University. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>

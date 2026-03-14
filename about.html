@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Evalanche Club</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+      padding: 5rem 0;
+    }
+
+    .about-left p {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 2;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 1.5rem;
+    }
+
+    .about-right {
+      position: sticky;
+      top: 120px;
+    }
+
+    .info-block {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .info-block:hover { border-color: rgba(77,240,255,0.25); }
+
+    .info-block-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+
+    .info-block-value {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* FACULTY SECTION */
+    .faculty-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .faculty-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .faculty-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+
+    .faculty-card:hover::before { transform: scaleX(1); }
+    .faculty-card:hover { transform: translateY(-4px); border-color: rgba(77,240,255,0.2); }
+
+    .faculty-avatar {
+      width: 64px;
+      height: 64px;
+      background: rgba(77,240,255,0.1);
+      border: 1px solid rgba(77,240,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.2rem;
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .faculty-card h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+
+    .faculty-card .role {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .faculty-card .quote-text {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.45);
+      font-style: italic;
+    }
+
+    /* TEAM SECTION */
+    .team-section {
+      padding: 5rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .team-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .team-card:hover { border-color: rgba(77,240,255,0.3); transform: translateY(-3px); }
+
+    .team-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(77,240,255,0.08);
+      border: 1px solid rgba(77,240,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.9rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .team-card h4 {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+
+    .team-card .team-role {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.4);
+    }
+
+    @media (max-width: 900px) {
+      .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .about-right { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
+      <span class="nav-name">EVALANCHE</span>
+    </a>
+    <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="login.html" class="nav-cta">Member Login</a></li>
+    </ul>
+  </nav>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="page-header">
+    <span class="page-header-eyebrow">Who We Are</span>
+    <h1>About<br>Evalanche</h1>
+    <p>A student community built to push the boundaries of ECE education.</p>
+  </div>
+
+  <main class="container">
+
+    <!-- ABOUT DETAIL -->
+    <div class="about-grid">
+      <div class="about-left reveal">
+        <p>The Evalanche Club is the flagship student organisation of the Department of Electronics and Communication Engineering at Jain (Deemed-to-be) University, Bengaluru.</p>
+        <p>We believe that education doesn't end in the classroom. Our club exists to give students a space to experiment, collaborate, fail fast, and build the skills that textbooks can't teach — leadership, communication, real-world problem solving, and creative thinking.</p>
+        <p>From circuit debugging competitions to hackathons, cultural festivals to social outreach — Evalanche is where ECE students discover what they're truly capable of.</p>
+        <p>Our tagline says it all: <em style="color: var(--accent);">"For the students, by the students."</em></p>
+      </div>
+      <div class="about-right">
+        <div class="info-block reveal">
+          <div class="info-block-label">Department</div>
+          <div class="info-block-value">Electronics & Communication Engineering</div>
+        </div>
+        <div class="info-block reveal">
+          <div class="info-block-label">University</div>
+          <div class="info-block-value">Jain (Deemed-to-be) University, Bengaluru</div>
+        </div>
+        <div class="info-block reveal">
+          <div class="info-block-label">Founded</div>
+          <div class="info-block-value">Est. 2020</div>
+        </div>
+        <div class="info-block reveal">
+          <div class="info-block-label">Membership</div>
+          <div class="info-block-value">Open to all ECE students</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FACULTY MENTORS -->
+    <section style="padding: 4rem 0; border-top: 1px solid var(--border);">
+      <p style="font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.4em; color: var(--accent); margin-bottom: 0.75rem;">OUR GUIDES</p>
+      <h2 style="font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Faculty Mentors</h2>
+      <p style="font-family: var(--font-body); font-size: 0.9rem; color: var(--text-muted);">The guiding force behind everything we do.</p>
+
+      <div class="faculty-grid">
+        <div class="faculty-card reveal">
+          <div class="faculty-avatar">SK</div>
+          <h3>Dr. Sumit Kumar</h3>
+          <div class="role">HEAD OF DEPARTMENT</div>
+          <p class="quote-text">"Innovation begins where curiosity meets determination."</p>
+        </div>
+        <div class="faculty-card reveal">
+          <div class="faculty-avatar">HM</div>
+          <h3>Prof. Harikrishna Moorthy</h3>
+          <div class="role">FACULTY MENTOR</div>
+          <p class="quote-text">"The best engineers are those who never stop asking 'why'."</p>
+        </div>
+        <div class="faculty-card reveal">
+          <div class="faculty-avatar">SM</div>
+          <h3>Prof. Savitha M</h3>
+          <div class="role">FACULTY COORDINATOR</div>
+          <p class="quote-text">"Teamwork transforms students into professionals."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="team-section">
+      <p style="font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.4em; color: var(--accent); margin-bottom: 0.75rem;">THE CREW</p>
+      <h2 style="font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Student Leadership</h2>
+      <p style="font-family: var(--font-body); font-size: 0.9rem; color: var(--text-muted);">The students who make it happen every year.</p>
+
+      <div class="team-grid">
+        <div class="team-card reveal">
+          <div class="team-avatar">P</div>
+          <h4>President</h4>
+          <div class="team-role">CLUB PRESIDENT</div>
+        </div>
+        <div class="team-card reveal">
+          <div class="team-avatar">VP</div>
+          <h4>Vice President</h4>
+          <div class="team-role">VICE PRESIDENT</div>
+        </div>
+        <div class="team-card reveal">
+          <div class="team-avatar">S</div>
+          <h4>Secretary</h4>
+          <div class="team-role">GENERAL SECRETARY</div>
+        </div>
+        <div class="team-card reveal">
+          <div class="team-avatar">T</div>
+          <h4>Treasurer</h4>
+          <div class="team-role">TREASURER</div>
+        </div>
+        <div class="team-card reveal">
+          <div class="team-avatar">TE</div>
+          <h4>Tech Lead</h4>
+          <div class="team-role">TECHNICAL HEAD</div>
+        </div>
+        <div class="team-card reveal">
+          <div class="team-avatar">CL</div>
+          <h4>Cultural Lead</h4>
+          <div class="team-role">CULTURAL HEAD</div>
+        </div>
+        <div class="team-card reveal">
+          <div class="team-avatar">PR</div>
+          <h4>PR Head</h4>
+          <div class="team-role">PUBLIC RELATIONS</div>
+        </div>
+        <div class="team-card reveal">
+          <div class="team-avatar">DG</div>
+          <h4>Design Head</h4>
+          <div class="team-role">CREATIVE & DESIGN</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/images/logo.png" alt="Evalanche" class="footer-logo">
+        <p class="footer-tagline">EVALANCHE CLUB</p>
+        <p class="footer-sub">Dept. of ECE, Jain (Deemed-to-be) University</p>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Navigate</p>
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-links">
+        <p class="footer-links-title">Account</p>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <p>© 2025 Evalanche Club — Dept. of ECE, Jain (Deemed-to-be) University. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
