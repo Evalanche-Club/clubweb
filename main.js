@@ -1,38 +1,42 @@
-// ===== THEME TOGGLE =====
+// ===== THEME SWITCHER =====
 (function () {
-  const STORAGE_KEY = 'evalanche-theme';
+  const KEY = 'evalanche-theme';
 
-  // Apply theme ASAP to prevent flash — called immediately
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    const icon = document.getElementById('themeIcon');
-    if (!icon) return;
-    if (theme === 'light') {
-      icon.className = 'fas fa-sun';
-    } else {
-      icon.className = 'fas fa-moon';
-    }
+    // Update all switcher pills on the page
+    document.querySelectorAll('.theme-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.theme === theme);
+    });
   }
 
-  // Read saved preference or default to dark
-  const saved = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch(e) { return null; } })();
-  const theme = saved === 'light' ? 'light' : 'dark';
-  applyTheme(theme);
+  // Apply saved theme immediately (called before DOMContentLoaded to prevent flash)
+  var saved = 'dark';
+  try { saved = localStorage.getItem(KEY) || 'dark'; } catch(e) {}
+  document.documentElement.setAttribute('data-theme', saved);
 
-  // Wire the button after DOM is ready
   document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('themeToggle');
-    if (!btn) return;
+    // Build the switcher widget and inject into every #themeToggle container
+    document.querySelectorAll('#themeToggle').forEach(container => {
+      container.innerHTML = `
+        <button class="theme-pill" data-theme="dark"  title="Dark mode">
+          <i class="fas fa-moon"></i> Dark
+        </button>
+        <button class="theme-pill" data-theme="light" title="Light mode">
+          <i class="fas fa-sun"></i> Light
+        </button>`;
 
-    // Re-apply in case icon wasn't in DOM when we first ran
-    applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
-
-    btn.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') || 'dark';
-      const next = current === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-      try { localStorage.setItem(STORAGE_KEY, next); } catch(e) {}
+      container.querySelectorAll('.theme-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          const t = pill.dataset.theme;
+          applyTheme(t);
+          try { localStorage.setItem(KEY, t); } catch(e) {}
+        });
+      });
     });
+
+    // Sync pill active state with current theme
+    applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
   });
 })();
 
