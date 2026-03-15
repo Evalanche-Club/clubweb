@@ -110,6 +110,19 @@
 })();
 
 // ===== COUNTER ANIMATION =====
+function runCounter(el) {
+  const target = parseInt(el.dataset.target) || 0;
+  if (!target) return;
+  const suffix = target >= 100 ? '+' : '';
+  let current = 0;
+  const step = target / 55;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = Math.floor(current) + suffix;
+    if (current >= target) clearInterval(timer);
+  }, 16);
+}
+
 (function () {
   const counters = document.querySelectorAll('[data-target]');
   if (!counters.length) return;
@@ -117,21 +130,21 @@
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
-      const el = entry.target;
-      const target = parseInt(el.dataset.target);
-      const suffix = target >= 100 ? '+' : '';
-      let current = 0;
-      const step = target / 60;
-      const timer = setInterval(() => {
-        current = Math.min(current + step, target);
-        el.textContent = Math.floor(current) + suffix;
-        if (current >= target) clearInterval(timer);
-      }, 16);
-      observer.unobserve(el);
+      runCounter(entry.target);
+      observer.unobserve(entry.target);
     });
   }, { threshold: 0.5 });
 
   counters.forEach(c => observer.observe(c));
+
+  // Re-run counters if Supabase updates data-target after initial render
+  window.rerunCounters = function() {
+    counters.forEach(el => {
+      if (el.textContent === '0' || el.textContent.endsWith('+') === false) {
+        runCounter(el);
+      }
+    });
+  };
 })();
 
 // ===== SCROLL REVEAL =====
