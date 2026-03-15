@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Apply theme immediately to prevent flash
+    (function(){
+      var t = localStorage.getItem('evalanche-theme');
+      if(t) document.documentElement.setAttribute('data-theme', t);
+      else  document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gallery — Evalanche Club</title>
@@ -305,6 +313,10 @@
       <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
       <span class="nav-name">EVALANCHE</span>
     </a>
+
+    <button class="theme-toggle" id="themeToggle" title="Toggle light / dark mode" aria-label="Toggle theme">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
     <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Home</a></li>

@@ -1,3 +1,41 @@
+// ===== THEME TOGGLE =====
+(function () {
+  const STORAGE_KEY = 'evalanche-theme';
+
+  // Apply theme ASAP to prevent flash — called immediately
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.getElementById('themeIcon');
+    if (!icon) return;
+    if (theme === 'light') {
+      icon.className = 'fas fa-sun';
+    } else {
+      icon.className = 'fas fa-moon';
+    }
+  }
+
+  // Read saved preference or default to dark
+  const saved = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch(e) { return null; } })();
+  const theme = saved === 'light' ? 'light' : 'dark';
+  applyTheme(theme);
+
+  // Wire the button after DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+
+    // Re-apply in case icon wasn't in DOM when we first ran
+    applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      try { localStorage.setItem(STORAGE_KEY, next); } catch(e) {}
+    });
+  });
+})();
+
 /* ===================================
    EVALANCHE CLUB — MAIN JS
    =================================== */

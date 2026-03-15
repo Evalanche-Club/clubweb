@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Apply theme immediately to prevent flash
+    (function(){
+      var t = localStorage.getItem('evalanche-theme');
+      if(t) document.documentElement.setAttribute('data-theme', t);
+      else  document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Events — Evalanche Club</title>
@@ -192,6 +200,13 @@
       .event-row-num { display: none; }
       .event-row-tags { flex-direction: row; align-items: flex-start; }
     }
+
+    /* ── LIGHT THEME OVERRIDES ──────────────────── */
+    [data-theme="light"] .event-row-body h3 { color: var(--text); }
+    [data-theme="light"] .event-row-body p  { color: var(--text-muted); }
+    [data-theme="light"] .upcoming-card     { background: rgba(0,0,0,0.02); border-color: var(--border); }
+    [data-theme="light"] .upcoming-card h3  { color: var(--text); }
+    [data-theme="light"] .upcoming-card p   { color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -201,6 +216,10 @@
       <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
       <span class="nav-name">EVALANCHE</span>
     </a>
+
+    <button class="theme-toggle" id="themeToggle" title="Toggle light / dark mode" aria-label="Toggle theme">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
     <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Home</a></li>

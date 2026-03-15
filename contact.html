@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Apply theme immediately to prevent flash
+    (function(){
+      var t = localStorage.getItem('evalanche-theme');
+      if(t) document.documentElement.setAttribute('data-theme', t);
+      else  document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact — Evalanche Club</title>
@@ -204,6 +212,18 @@
       .contact-layout { grid-template-columns: 1fr; gap: 3rem; }
       .form-row { grid-template-columns: 1fr; }
     }
+
+    /* ── LIGHT THEME OVERRIDES ──────────────────── */
+    [data-theme="light"] .contact-info h2 { color: var(--text); }
+    [data-theme="light"] .contact-info p  { color: var(--text-muted); }
+    [data-theme="light"] .contact-form    { background: rgba(0,0,0,0.02); border-color: var(--border); }
+    [data-theme="light"] .contact-detail-text span { color: var(--text); }
+    [data-theme="light"] .form-group input,
+    [data-theme="light"] .form-group select,
+    [data-theme="light"] .form-group textarea {
+      background: rgba(0,0,0,0.04); color: var(--text);
+      border-color: var(--border);
+    }
   </style>
 </head>
 <body>
@@ -213,6 +233,10 @@
       <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
       <span class="nav-name">EVALANCHE</span>
     </a>
+
+    <button class="theme-toggle" id="themeToggle" title="Toggle light / dark mode" aria-label="Toggle theme">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
     <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Home</a></li>

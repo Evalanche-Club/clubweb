@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Apply theme immediately to prevent flash
+    (function(){
+      var t = localStorage.getItem('evalanche-theme');
+      if(t) document.documentElement.setAttribute('data-theme', t);
+      else  document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Evalanche Club — ECE, Jain University</title>
@@ -806,6 +814,63 @@
       .hero-title { font-size: 3rem; }
       .stats-strip { grid-template-columns: 1fr 1fr; }
     }
+
+    /* ── LIGHT THEME OVERRIDES ──────────────────── */
+    [data-theme="light"] .hero-title { color: var(--text); }
+    [data-theme="light"] .hero-title .highlight {
+      -webkit-text-stroke: 2px var(--accent); color:transparent;
+    }
+    [data-theme="light"] .hero-eyebrow,
+    [data-theme="light"] .hero-sub { color: var(--text-muted); }
+    [data-theme="light"] .stat-number { color: var(--accent); }
+    [data-theme="light"] .stat-label  { color: var(--text-muted); }
+    [data-theme="light"] .stat-item   { border-color: var(--border); }
+    [data-theme="light"] .stats-strip {
+      background: rgba(255,255,255,0.75);
+      border-color: var(--border);
+    }
+    [data-theme="light"] .intro-heading { color: var(--text); }
+    [data-theme="light"] .intro-body    { color: var(--text-muted); }
+    [data-theme="light"] .vm-card {
+      background: rgba(0,0,0,0.02);
+      border-color: var(--border);
+    }
+    [data-theme="light"] .vm-card h3 { color: var(--text); }
+    [data-theme="light"] .vm-card p  { color: var(--text-muted); }
+    [data-theme="light"] .events-grid {
+      background: var(--border); border-color: var(--border);
+    }
+    [data-theme="light"] .event-tile  { background: var(--bg2); }
+    [data-theme="light"] .event-tile h3 { color: var(--text); }
+    [data-theme="light"] .event-tile p  { color: var(--text-muted); }
+    [data-theme="light"] .timeline-body h3 { color: var(--text); }
+    [data-theme="light"] .timeline-body p  { color: var(--text-muted); }
+    [data-theme="light"] .testimonial-card {
+      background: rgba(0,0,0,0.03);
+      border-color: var(--border);
+    }
+    [data-theme="light"] .testimonial-quote { color: var(--text-muted); }
+    [data-theme="light"] .testimonial-name  { color: var(--text); }
+    [data-theme="light"] .marquee-section { background: rgba(0,0,0,0.04); }
+    [data-theme="light"] .marquee-item    { color: rgba(0,0,0,0.08); }
+    [data-theme="light"] .oscilloscope-section { background: rgba(0,0,0,0.04); }
+    [data-theme="light"] .cta-heading em {
+      -webkit-text-stroke: 1px var(--accent); color:transparent;
+    }
+    [data-theme="light"] .cta-sub { color: var(--text-muted); }
+    [data-theme="light"] .testimonials-ticker::before {
+      background: linear-gradient(to right, var(--bg), transparent);
+    }
+    [data-theme="light"] .testimonials-ticker::after {
+      background: linear-gradient(to left, var(--bg), transparent);
+    }
+    [data-theme="light"] .section-title-lg { color: var(--text); }
+    [data-theme="light"] .btn-ghost {
+      color: var(--accent); border-color: var(--accent);
+    }
+    [data-theme="light"] .btn-ghost:hover {
+      background: rgba(0,153,187,0.08);
+    }
   </style>
 </head>
 <body>
@@ -816,6 +881,10 @@
       <img src="assets/images/logo.png" alt="Evalanche" class="nav-logo">
       <span class="nav-name">EVALANCHE</span>
     </a>
+
+    <button class="theme-toggle" id="themeToggle" title="Toggle light / dark mode" aria-label="Toggle theme">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
     <button class="nav-hamburger" id="navToggle" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
