@@ -851,14 +851,16 @@
 
     <!-- ── DASHBOARD ── -->
     <div class="page-section active" id="sec-dashboard">
+      <div id="pendingBanner"></div>
       <div class="stats-row" id="dashStats">
         <div class="stat-card">
           <div class="stat-card-val" id="ds-members">—</div>
           <div class="stat-card-label">Total Members</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-val" id="ds-pending">—</div>
+        <div class="stat-card" onclick="showSection('members');filterMemberStatus('pending')" style="cursor:pointer">
+          <div class="stat-card-val" id="ds-pending" style="color:var(--yellow)">—</div>
           <div class="stat-card-label">Pending Approval</div>
+          <i class="fas fa-clock stat-card-icon" style="color:rgba(255,187,51,0.15)"></i>
         </div>
         <div class="stat-card">
           <div class="stat-card-val" id="ds-gallery">—</div>
@@ -1410,6 +1412,32 @@ async function loadDashboard() {
   document.getElementById('ds-gallery').textContent  = gCount ?? '—';
   document.getElementById('ds-events').textContent   = eCount ?? '—';
   document.getElementById('ds-upcoming').textContent = uCount ?? '—';
+
+  // Highlight pending count in red/yellow if > 0
+  const pendingEl = document.getElementById('ds-pending');
+  if (pCount > 0) {
+    pendingEl.style.color = 'var(--yellow)';
+    // Show a banner notification at top of dashboard
+    const alertDiv = document.getElementById('pendingBanner');
+    if (alertDiv) {
+      alertDiv.innerHTML = `
+        <div style="background:rgba(255,187,51,0.08);border:1px solid rgba(255,187,51,0.25);border-left:3px solid var(--yellow);
+          border-radius:2px;padding:0.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+          <div>
+            <div style="font-size:0.82rem;color:var(--yellow);font-weight:600">
+              <i class="fas fa-user-clock" style="margin-right:0.5rem"></i>
+              ${pCount} member${pCount>1?'s':''} waiting for approval
+            </div>
+            <div style="font-size:0.7rem;color:rgba(255,187,51,0.6);margin-top:0.2rem">
+              New sign-ups are pending — review and approve in the Members section.
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="showSection('members');filterMemberStatus('pending')">
+            Review Now →
+          </button>
+        </div>`;
+    }
+  }
 
   // Recent 8 members
   const { data } = await db.from('members').select('*').order('created_at',{ascending:false}).limit(8);
