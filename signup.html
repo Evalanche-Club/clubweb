@@ -417,6 +417,79 @@
     @media (max-width: 500px) {
       .form-row { grid-template-columns: 1fr; }
     }
+
+    /* ── LIGHT THEME OVERRIDES ──────────────────── */
+    [data-theme="light"] .signup-panel-left {
+      background: rgba(0,153,187,0.04);
+      border-color: var(--border-solid);
+    }
+    [data-theme="light"] .signup-panel-left h2 { color: var(--text); }
+    [data-theme="light"] .signup-panel-left p  { color: var(--text-muted); }
+    [data-theme="light"] .perk-text strong { color: var(--text); }
+    [data-theme="light"] .perk-text span   { color: var(--text-muted); }
+    [data-theme="light"] .signup-panel-right {
+      background: rgba(255,255,255,0.92);
+    }
+    [data-theme="light"] .form-group label { color: var(--text-dim); }
+    [data-theme="light"] .input-wrap input,
+    [data-theme="light"] .input-wrap select {
+      background: rgba(0,0,0,0.04); color: var(--text);
+      border-color: var(--border-solid);
+    }
+    [data-theme="light"] .input-wrap input::placeholder { color: var(--text-dim); }
+    [data-theme="light"] .field-hint  { color: var(--text-dim); }
+    [data-theme="light"] .step-dot    { background: var(--bg2); color: var(--text-muted); border-color: var(--border); }
+    [data-theme="light"] .step-dot.active { background: rgba(0,153,187,0.08); color: var(--accent); }
+    [data-theme="light"] .step-dot.done   { background: var(--accent); color: #fff; }
+    [data-theme="light"] .pw-strength-label { color: var(--text-muted); }
+    [data-theme="light"] .signup-success h2 { color: var(--text); }
+    [data-theme="light"] .signup-success p  { color: var(--text-muted); }
+
+    /* ── OTP INPUT ─────────────────────────────── */
+    .otp-box {
+      width: 48px; height: 56px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-appearance: none;
+      caret-color: var(--accent);
+    }
+    .otp-box:focus {
+      border-color: var(--accent);
+      background: rgba(77,240,255,0.06);
+      box-shadow: 0 0 0 3px rgba(77,240,255,0.1);
+    }
+    .otp-box.filled { border-color: rgba(77,240,255,0.4); }
+    [data-theme="light"] .otp-box {
+      background: rgba(0,0,0,0.04);
+      color: var(--text); border-color: var(--border-solid);
+    }
+    [data-theme="light"] .otp-box:focus { background: rgba(0,153,187,0.05); }
+  
+    /* OTP Screen light theme */
+    [data-theme="light"] #signupSuccess {
+      color: var(--text);
+    }
+    [data-theme="light"] #otpInput {
+      background: rgba(0,0,0,0.03);
+      border-color: var(--border-solid);
+      color: var(--text);
+    }
+    [data-theme="light"] #otpInput:focus {
+      border-color: var(--accent);
+      background: rgba(0,153,187,0.03);
+    }
+    [data-theme="light"] #otpEmailDisplay {
+      background: rgba(0,153,187,0.06);
+      border-color: rgba(0,153,187,0.2);
+    }
+    [data-theme="light"] .signup-success h2 { color: var(--text); }
   </style>
 </head>
 <body>
@@ -427,9 +500,7 @@
       <span class="nav-name">EVALANCHE</span>
     </a>
 
-    <button class="theme-toggle" id="themeToggle" title="Toggle light / dark mode" aria-label="Toggle theme">
-      <i class="fas fa-moon" id="themeIcon"></i>
-    </button>
+    <div id="themeToggle" role="group" aria-label="Theme selector"></div>
     <button class="nav-hamburger" id="navToggle"><span></span><span></span><span></span></button>
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Home</a></li>
@@ -497,6 +568,8 @@
         <div class="step-dot" id="dot-2">2<span class="step-label">ACADEMIC</span></div>
         <div class="step-line" id="line-2"></div>
         <div class="step-dot" id="dot-3">3<span class="step-label">ACCOUNT</span></div>
+        <div class="step-line" id="line-3"></div>
+        <div class="step-dot" id="dot-4">4<span class="step-label">VERIFY</span></div>
       </div>
 
       <div id="signupFormBody">
@@ -638,26 +711,92 @@
           </div>
           <div class="step-nav">
             <button class="btn-step-prev" onclick="prevStep(3)">← Back</button>
-            <button class="btn-submit-final" onclick="submitSignup()">Create My Account →</button>
+            <button class="btn-submit-final" id="sendOtpBtn" onclick="submitSignup()">Send Verification Email →</button>
           </div>
+        </div>
+
+        <!-- STEP 4: OTP Verification -->
+        <div class="step-panel" id="step-4">
+          <div style="text-align:center;margin-bottom:1.5rem;">
+            <div style="width:56px;height:56px;border-radius:50%;background:rgba(77,240,255,0.1);border:1px solid rgba(77,240,255,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.4rem;color:var(--accent);">
+              <i class="fas fa-envelope-open-text"></i>
+            </div>
+            <h3 style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:0.5rem;">Check your email</h3>
+            <p style="font-family:var(--font-body);font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+              We sent a 6-digit OTP to <strong id="otpEmailDisplay" style="color:var(--accent)"></strong>.<br>
+              Enter it below to complete registration.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label>One-Time Password (OTP)</label>
+            <div class="input-wrap">
+              <i class="fas fa-key field-icon"></i>
+              <input type="text" id="otpInput" placeholder="Enter 6-digit OTP"
+                maxlength="6" inputmode="numeric" pattern="[0-9]*"
+                style="text-align:center;font-size:1.4rem;letter-spacing:0.5em;font-family:var(--font-mono)">
+            </div>
+            <div class="field-error" id="err-otp">Please enter the 6-digit OTP.</div>
+          </div>
+
+          <div id="otpMsg" style="display:none;border-radius:3px;padding:0.75rem 1rem;font-size:0.8rem;margin-top:0.5rem;line-height:1.5;"></div>
+
+          <div class="step-nav">
+            <button class="btn-step-prev" onclick="prevStep(4)">← Back</button>
+            <button class="btn-submit-final" id="verifyOtpBtn" onclick="verifyOtpAndCreate()">Verify & Create Account →</button>
+          </div>
+
+          <p style="text-align:center;margin-top:1rem;font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">
+            Didn't receive it?
+            <a href="#" onclick="resendOtp()" style="color:var(--accent);text-decoration:none;transition:opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">Resend OTP</a>
+          </p>
         </div>
 
       </div><!-- end signupFormBody -->
 
-      <!-- SUCCESS STATE -->
+      <!-- OTP VERIFICATION STATE -->
       <div class="signup-success" id="signupSuccess">
-        <div class="success-icon"><i class="fas fa-envelope"></i></div>
-        <h2>Check your inbox.</h2>
-        <p>We've sent a verification email to:</p>
-        <div class="virtual-id-display" id="successEmail" style="font-size:0.85rem;letter-spacing:0.1em;">—</div>
-        <p style="margin-top:1.2rem">Click the link in that email to verify your account. Once verified, an admin will review and approve your membership.</p>
-        <div style="margin-top:1.5rem;padding:1rem 1.5rem;background:rgba(77,240,255,0.06);border:1px solid rgba(77,240,255,0.15);border-radius:4px;text-align:left;">
-          <p style="font-family:var(--font-mono);font-size:0.55rem;letter-spacing:0.25em;color:var(--accent);margin-bottom:0.6rem">YOUR VIRTUAL ID</p>
-          <div id="successVirtualId" style="font-family:var(--font-mono);font-size:1rem;letter-spacing:0.25em;color:#fff">—</div>
-          <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.4rem">Save this — you'll need it to log in.</p>
+        <div class="success-icon"><i class="fas fa-envelope-open-text"></i></div>
+        <h2>Enter your OTP</h2>
+        <p>We sent a 6-digit verification code to:</p>
+        <div class="virtual-id-display" id="successEmail" style="font-size:0.85rem;letter-spacing:0.1em;margin-bottom:1.5rem">—</div>
+
+        <!-- OTP INPUT -->
+        <div id="otpSection">
+          <div style="display:flex;gap:0.5rem;justify-content:center;margin-bottom:1rem">
+            <input type="text" class="otp-box" maxlength="1" id="otp0" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" id="otp1" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" id="otp2" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" id="otp3" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" id="otp4" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" id="otp5" inputmode="numeric">
+          </div>
+          <div id="otpError" style="font-size:0.75rem;color:#ff4d6d;margin-bottom:0.75rem;display:none;text-align:center"></div>
+          <button class="btn-step-next" id="otpVerifyBtn" onclick="verifyOTP()" style="width:100%;display:block;text-align:center;padding:0.9rem">
+            Verify Code →
+          </button>
+          <p style="margin-top:1rem;font-size:0.72rem;color:rgba(255,255,255,0.3)">
+            Didn't receive it? Check spam or
+            <button onclick="resendOTP()" id="resendBtn" style="background:none;border:none;color:var(--accent);font-size:0.72rem;cursor:pointer;padding:0;text-decoration:underline">resend code</button>
+          </p>
         </div>
-        <p style="margin-top:1.2rem;font-size:0.78rem;color:rgba(255,255,255,0.35)">Didn't get the email? Check your spam folder, or <a href="signup.html" style="color:var(--accent);text-decoration:none">try signing up again</a> with a different address.</p>
-        <a href="index.html" class="btn-step-next" style="display:inline-block; margin-top: 1.5rem; text-decoration: none;">Back to Home</a>
+
+        <!-- VERIFIED STATE -->
+        <div id="otpVerified" style="display:none">
+          <div style="margin:1rem 0 1.5rem">
+            <div style="width:56px;height:56px;border-radius:50%;background:rgba(45,255,143,0.12);border:2px solid rgba(45,255,143,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:1.4rem;color:#2dff8f">
+              <i class="fas fa-check"></i>
+            </div>
+          </div>
+          <h2 style="font-size:1.4rem;margin-bottom:0.5rem">Email Verified!</h2>
+          <p>Your account is created. An admin will review and approve your membership.</p>
+          <div style="margin-top:1.5rem;padding:1rem 1.5rem;background:rgba(77,240,255,0.06);border:1px solid rgba(77,240,255,0.15);border-radius:4px;text-align:left;">
+            <p style="font-family:var(--font-mono);font-size:0.55rem;letter-spacing:0.25em;color:var(--accent);margin-bottom:0.6rem">YOUR VIRTUAL ID</p>
+            <div id="successVirtualId" style="font-family:var(--font-mono);font-size:1rem;letter-spacing:0.25em;color:#fff">—</div>
+            <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.4rem">Save this — you'll need it to log in.</p>
+          </div>
+          <a href="login.html" class="btn-step-next" style="display:block;margin-top:1.5rem;text-decoration:none;text-align:center">Go to Login →</a>
+        </div>
       </div>
 
     </div><!-- end right panel -->
@@ -672,17 +811,22 @@
   const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
   let currentStep = 1;
-  const TOTAL_STEPS = 3;
+  const TOTAL_STEPS = 4;
 
   // ── Step indicator ─────────────────────────────────────────────────────────
   function setStep(n) {
     for (let i = 1; i <= TOTAL_STEPS; i++) {
-      document.getElementById(`step-${i}`).classList.toggle('active', i === n);
+      const panel = document.getElementById(`step-${i}`);
+      if (panel) panel.classList.toggle('active', i === n);
       const dot = document.getElementById(`dot-${i}`);
-      dot.classList.toggle('active', i === n);
-      dot.classList.toggle('done', i < n);
-      if (i < TOTAL_STEPS)
-        document.getElementById(`line-${i}`).classList.toggle('done', i < n);
+      if (dot) {
+        dot.classList.toggle('active', i === n);
+        dot.classList.toggle('done', i < n);
+      }
+      if (i < TOTAL_STEPS) {
+        const line = document.getElementById(`line-${i}`);
+        if (line) line.classList.toggle('done', i < n);
+      }
     }
     currentStep = n;
   }
@@ -725,10 +869,15 @@
       if (pw !== cpw)    fail('confirmPassword', 'Passwords do not match.');
       if (!document.getElementById('agreeTerms').checked) fail('terms', 'You must agree to continue.');
     }
+    if (n === 4) {
+      clear('otp');
+      const otp = document.getElementById('otpInput')?.value?.trim() || '';
+      if (otp.length < 6) fail('otp', 'Enter the 6-digit OTP from your email.');
+    }
     return ok;
   }
 
-  function nextStep(n) { if (validateStep(n) && n < TOTAL_STEPS) setStep(n + 1); }
+  function nextStep(n) { if (validateStep(n) && n < 3) setStep(n + 1); }
   function prevStep(n) { if (n > 1) setStep(n - 1); }
 
   // ── Password strength ──────────────────────────────────────────────────────
@@ -777,13 +926,15 @@
     if (el) el.style.display = 'none';
   }
 
-  // ── MAIN SIGNUP ────────────────────────────────────────────────────────────
+  // ── MAIN SIGNUP — sends OTP via Supabase email ─────────────────────────────
+  let _pendingEmail  = '';
+  let _pendingVirtId = '';
+
   async function submitSignup() {
     if (!validateStep(3)) return;
     clearFormError();
     setLoading(true);
 
-    // Read all field values at the moment of submit — not from autofill
     const email     = document.getElementById('email').value.trim().toLowerCase();
     const password  = document.getElementById('password').value;
     const firstName = document.getElementById('firstName').value.trim();
@@ -794,17 +945,16 @@
     const section   = document.getElementById('section').value;
     const interest  = document.getElementById('interest').value;
 
-    // Store profile data in localStorage so verify.html can insert it
-    // after the user is authenticated (email confirmed)
+    _pendingEmail  = email;
+    _pendingVirtId = virtualId;
+
     const profileData = { firstName, lastName, email, phone, virtualId, year, section, interest };
     try { localStorage.setItem('evalanche_pending_profile', JSON.stringify(profileData)); } catch(e) {}
 
-    // Create auth user — Supabase sends the verification email automatically
     const { data: authData, error: authError } = await db.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${location.origin}/verify.html`,
         data: { first_name: firstName, last_name: lastName, virtual_id: virtualId }
       }
     });
@@ -822,19 +972,100 @@
       return;
     }
 
-    // Success — show the "check your inbox" screen with the ACTUAL email from the form
-    showSuccessScreen(virtualId, email);
+    showOtpScreen(virtualId, email);
   }
 
-  function showSuccessScreen(virtualId, email) {
+  function showOtpScreen(virtualId, email) {
     document.getElementById('signupFormBody').style.display = 'none';
     document.getElementById('stepIndicator').style.display  = 'none';
     document.querySelector('.form-head').style.display      = 'none';
-    // Use the passed-in values directly — never pull from DOM again
-    document.getElementById('successVirtualId').textContent = virtualId;
-    document.getElementById('successEmail').textContent     = email;
+    document.getElementById('otpEmailDisplay').textContent  = email;
     document.getElementById('signupSuccess').style.display  = 'block';
+    setTimeout(() => { const inp = document.getElementById('otpInput'); if (inp) inp.focus(); }, 200);
   }
+
+  async function verifyOtp() {
+    const token = (document.getElementById('otpInput').value || '').trim();
+    const errEl = document.getElementById('otpError');
+    const btn   = document.getElementById('otpVerifyBtn');
+    errEl.style.display = 'none';
+
+    if (token.length !== 6 || !/^\d+$/.test(token)) {
+      errEl.textContent = 'Please enter the 6-digit code from your email.';
+      errEl.style.display = 'block'; return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Verifying…';
+
+    const { data, error } = await db.auth.verifyOtp({
+      email: _pendingEmail, token, type: 'email'
+    });
+
+    if (error) {
+      btn.disabled = false; btn.textContent = 'Verify & Create Account →';
+      errEl.textContent = (error.message.includes('expired') || error.message.includes('invalid'))
+        ? 'Incorrect or expired code. Try resending a new one.' : error.message;
+      errEl.style.display = 'block'; return;
+    }
+
+    btn.textContent = 'Creating profile…';
+    await insertMemberProfile(data.user);
+    btn.disabled = false;
+    document.getElementById('otpVerifyBtn').style.display = 'none';
+    const resendArea = document.getElementById('resendBtn');
+    if (resendArea && resendArea.parentElement) resendArea.parentElement.style.display = 'none';
+    document.getElementById('successVirtualId').textContent = _pendingVirtId;
+    document.getElementById('accountCreatedMsg').style.display = 'block';
+  }
+
+  async function insertMemberProfile(user) {
+    if (!user) return;
+    const { data: existing } = await db.from('members').select('id').eq('email', user.email).maybeSingle();
+    if (existing) return;
+    let profile = {};
+    try { const s = localStorage.getItem('evalanche_pending_profile'); if (s) profile = JSON.parse(s); } catch(e) {}
+    const meta = user.user_metadata || {};
+    await db.from('members').insert({
+      first_name: profile.firstName || meta.first_name || '',
+      last_name:  profile.lastName  || meta.last_name  || '',
+      email:      user.email,
+      phone:      profile.phone     || '',
+      virtual_id: profile.virtualId || meta.virtual_id || user.email.split('@')[0].toUpperCase(),
+      year:       profile.year      || '',
+      section:    profile.section   || '',
+      interest:   profile.interest  || '',
+      role: 'member', status: 'pending',
+      joined_batch: new Date().getFullYear().toString(),
+    });
+    try { localStorage.removeItem('evalanche_pending_profile'); } catch(e) {}
+  }
+
+  async function resendOtp() {
+    const btn = document.getElementById('resendBtn');
+    btn.textContent = 'Sending…'; btn.disabled = true;
+    const { error } = await db.auth.resend({ type: 'signup', email: _pendingEmail });
+    if (error) {
+      document.getElementById('otpError').textContent = 'Could not resend: ' + error.message;
+      document.getElementById('otpError').style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Resend Code';
+    } else {
+      btn.textContent = 'Sent ✓';
+      setTimeout(() => { btn.textContent = 'Resend Code'; btn.disabled = false; }, 30000);
+    }
+  }
+
+  // OTP input: allow only digits, auto-submit at 6
+  document.addEventListener('DOMContentLoaded', () => {
+    const otpInp = document.getElementById('otpInput');
+    if (!otpInp) return;
+    otpInp.addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '').slice(0, 6);
+      if (this.value.length === 6) verifyOtp();
+    });
+    otpInp.addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });
+  });
+
+  function showSuccessScreen(virtualId, email) { showOtpScreen(virtualId, email); }
   </script>
 </body>
 </html>

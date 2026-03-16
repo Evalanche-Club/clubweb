@@ -1,105 +1,106 @@
+/* ===================================
+   EVALANCHE CLUB — MAIN JS v3.0
+   Full theme + responsive + OTP support
+   =================================== */
+
 // ===== THEME SWITCHER =====
+// Runs as IIFE immediately — prevents flash
 (function () {
-  const KEY = 'evalanche-theme';
+  var KEY = 'evalanche-theme';
 
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    // Update all switcher pills on the page
-    document.querySelectorAll('.theme-pill').forEach(p => {
+    document.querySelectorAll('.theme-pill').forEach(function(p) {
       p.classList.toggle('active', p.dataset.theme === theme);
+      p.setAttribute('aria-pressed', p.dataset.theme === theme ? 'true' : 'false');
     });
+    // Update particles opacity
+    var pc = document.getElementById('particleCanvas');
+    if (pc) pc.style.opacity = theme === 'light' ? '0.3' : '1';
   }
 
-  // Apply saved theme immediately (called before DOMContentLoaded to prevent flash)
+  // Apply saved theme immediately to prevent flash
   var saved = 'dark';
   try { saved = localStorage.getItem(KEY) || 'dark'; } catch(e) {}
   document.documentElement.setAttribute('data-theme', saved);
 
-  document.addEventListener('DOMContentLoaded', () => {
-    // Build the switcher widget and inject into every #themeToggle container
-    document.querySelectorAll('#themeToggle').forEach(container => {
-      container.innerHTML = `
-        <button class="theme-pill" data-theme="dark"  title="Dark mode">
-          <i class="fas fa-moon"></i> Dark
-        </button>
-        <button class="theme-pill" data-theme="light" title="Light mode">
-          <i class="fas fa-sun"></i> Light
-        </button>`;
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('#themeToggle').forEach(function(container) {
+      // Determine if this is floating (auth pages)
+      var isFloat = container.style.position === 'fixed' || 
+                    container.getAttribute('style') && container.getAttribute('style').includes('fixed');
+      
+      container.innerHTML =
+        '<button class="theme-pill" data-theme="dark" aria-pressed="false" title="Dark mode">' +
+          '<i class="fas fa-moon"></i><span>Dark</span>' +
+        '</button>' +
+        '<button class="theme-pill" data-theme="light" aria-pressed="false" title="Light mode">' +
+          '<i class="fas fa-sun"></i><span>Light</span>' +
+        '</button>';
 
-      container.querySelectorAll('.theme-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-          const t = pill.dataset.theme;
+      container.querySelectorAll('.theme-pill').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          var t = pill.dataset.theme;
           applyTheme(t);
           try { localStorage.setItem(KEY, t); } catch(e) {}
         });
       });
     });
-
-    // Sync pill active state with current theme
+    // Sync pill states
     applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
   });
 })();
 
-/* ===================================
-   EVALANCHE CLUB — MAIN JS
-   =================================== */
+/* ─────────────────────────────────────────── */
 
 // ===== PARTICLE CANVAS =====
 (function () {
-  const canvas = document.getElementById('particleCanvas');
+  var canvas = document.getElementById('particleCanvas');
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  let particles = [];
-  const PARTICLE_COUNT = 80;
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  var COUNT = window.innerWidth < 600 ? 40 : 70;
 
   function resize() {
-    canvas.width = window.innerWidth;
+    canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
   }
 
-  class Particle {
-    constructor() { this.reset(true); }
-    reset(init) {
-      this.x = Math.random() * canvas.width;
-      this.y = init ? Math.random() * canvas.height : canvas.height + 10;
-      this.size = Math.random() * 1.5 + 0.3;
-      this.speedY = -(Math.random() * 0.4 + 0.1);
-      this.speedX = (Math.random() - 0.5) * 0.2;
-      this.opacity = Math.random() * 0.5 + 0.1;
-      this.life = 0;
-      this.maxLife = Math.random() * 400 + 200;
-    }
-    update() {
-      this.x += this.speedX;
-      this.y += this.speedY;
-      this.life++;
-      if (this.life > this.maxLife || this.y < -10) this.reset(false);
-    }
-    draw() {
-      const fade = Math.min(this.life / 60, 1) * Math.min((this.maxLife - this.life) / 60, 1);
-      ctx.globalAlpha = this.opacity * fade;
-      ctx.fillStyle = '#4df0ff';
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
+  function Particle(init) { this.reset(init); }
+  Particle.prototype.reset = function(init) {
+    this.x = Math.random() * canvas.width;
+    this.y = init ? Math.random() * canvas.height : canvas.height + 10;
+    this.size   = Math.random() * 1.4 + 0.3;
+    this.speedY = -(Math.random() * 0.4 + 0.1);
+    this.speedX = (Math.random() - 0.5) * 0.2;
+    this.opacity = Math.random() * 0.45 + 0.1;
+    this.life    = 0;
+    this.maxLife = Math.random() * 400 + 200;
+  };
+  Particle.prototype.update = function() {
+    this.x += this.speedX; this.y += this.speedY; this.life++;
+    if (this.life > this.maxLife || this.y < -10) this.reset(false);
+  };
+  Particle.prototype.draw = function() {
+    var fade = Math.min(this.life/60,1) * Math.min((this.maxLife-this.life)/60,1);
+    ctx.globalAlpha = this.opacity * fade;
+    ctx.fillStyle = '#4df0ff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    ctx.fill();
+  };
 
-  // Create connections between close particles
   function drawConnections() {
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
-          ctx.globalAlpha = (1 - dist / 120) * 0.08;
-          ctx.strokeStyle = '#4df0ff';
-          ctx.lineWidth = 0.5;
+    for (var i=0; i<particles.length; i++) {
+      for (var j=i+1; j<particles.length; j++) {
+        var dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if (dist<110) {
+          ctx.globalAlpha=(1-dist/110)*0.07;
+          ctx.strokeStyle='#4df0ff'; ctx.lineWidth=0.5;
           ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
           ctx.stroke();
         }
       }
@@ -108,57 +109,84 @@
 
   function init() {
     resize();
-    particles = Array.from({ length: PARTICLE_COUNT }, () => new Particle());
+    particles = [];
+    for (var i=0;i<COUNT;i++) particles.push(new Particle(true));
   }
 
   function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     drawConnections();
-    particles.forEach(p => { p.update(); p.draw(); });
-    ctx.globalAlpha = 1;
+    particles.forEach(function(p){p.update();p.draw();});
+    ctx.globalAlpha=1;
     requestAnimationFrame(animate);
   }
 
-  window.addEventListener('resize', resize);
-  init();
-  animate();
+  var ro = null;
+  window.addEventListener('resize', function() {
+    clearTimeout(ro);
+    ro = setTimeout(function() {
+      COUNT = window.innerWidth < 600 ? 40 : 70;
+      init();
+    }, 200);
+  });
+
+  init(); animate();
 })();
 
 // ===== NAVBAR SCROLL =====
 (function () {
-  const nav = document.querySelector('.navbar');
+  var nav = document.querySelector('.navbar');
   if (!nav) return;
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) nav.classList.add('scrolled');
+  var last = 0;
+  window.addEventListener('scroll', function() {
+    var y = window.scrollY;
+    if (y > 50) nav.classList.add('scrolled');
     else nav.classList.remove('scrolled');
-  });
+    last = y;
+  }, {passive:true});
 })();
 
 // ===== MOBILE NAV =====
 (function () {
-  const toggle = document.getElementById('navToggle');
-  const links = document.getElementById('navLinks');
+  var toggle = document.getElementById('navToggle');
+  var links  = document.getElementById('navLinks');
   if (!toggle || !links) return;
-  toggle.addEventListener('click', () => {
-    toggle.classList.toggle('open');
-    links.classList.toggle('open');
+
+  toggle.addEventListener('click', function() {
+    var open = toggle.classList.toggle('open');
+    links.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.style.overflow = open ? 'hidden' : '';
   });
-  links.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
+
+  // Close on link click
+  links.querySelectorAll('a').forEach(function(a) {
+    a.addEventListener('click', function() {
       toggle.classList.remove('open');
       links.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
     });
+  });
+
+  // Close on outside click
+  document.addEventListener('click', function(e) {
+    if (links.classList.contains('open') && !nav.contains(e.target)) {
+      toggle.classList.remove('open');
+      links.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
   });
 })();
 
 // ===== COUNTER ANIMATION =====
 function runCounter(el) {
-  const target = parseInt(el.dataset.target) || 0;
+  var target = parseInt(el.dataset.target) || 0;
   if (!target) return;
-  const suffix = target >= 100 ? '+' : '';
-  let current = 0;
-  const step = target / 55;
-  const timer = setInterval(() => {
+  var suffix = target >= 100 ? '+' : '';
+  var current = 0, step = target / 55;
+  var timer = setInterval(function() {
     current = Math.min(current + step, target);
     el.textContent = Math.floor(current) + suffix;
     if (current >= target) clearInterval(timer);
@@ -166,316 +194,159 @@ function runCounter(el) {
 }
 
 (function () {
-  const counters = document.querySelectorAll('[data-target]');
+  var counters = document.querySelectorAll('[data-target]');
   if (!counters.length) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
       if (!entry.isIntersecting) return;
       runCounter(entry.target);
       observer.unobserve(entry.target);
     });
   }, { threshold: 0.5 });
-
-  counters.forEach(c => observer.observe(c));
-
-  // Re-run counters if Supabase updates data-target after initial render
+  counters.forEach(function(c) { observer.observe(c); });
   window.rerunCounters = function() {
-    counters.forEach(el => {
-      if (el.textContent === '0' || el.textContent.endsWith('+') === false) {
-        runCounter(el);
-      }
-    });
+    counters.forEach(function(el) { if (el.textContent === '0') runCounter(el); });
   };
 })();
 
 // ===== SCROLL REVEAL =====
 (function () {
-  const reveals = document.querySelectorAll('.reveal');
+  var reveals = document.querySelectorAll('.reveal');
   if (!reveals.length) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry, i) {
       if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        setTimeout(function() { entry.target.classList.add('visible'); }, i * 75);
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1 });
-
-  reveals.forEach(el => observer.observe(el));
+  }, { threshold: 0.08 });
+  reveals.forEach(function(el) { observer.observe(el); });
 })();
 
-// ===== OSCILLOSCOPE CANVAS — multi-waveform =====
+// ===== OSCILLOSCOPE CANVAS =====
 (function () {
-  const canvas = document.getElementById('oscilloscopeCanvas');
+  var canvas = document.getElementById('oscilloscopeCanvas');
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const freqLabel = document.getElementById('oscFreqLabel');
-  const waveLabel = document.getElementById('oscWaveLabel');
+  var ctx = canvas.getContext('2d');
+  var freqLabel = document.getElementById('oscFreqLabel');
+  var waveLabel = document.getElementById('oscWaveLabel');
 
-  // ── Waveform math functions ──────────────────────────────────────────────
-  function sine(p)     { return Math.sin(p * Math.PI * 2); }
-  function square(p)   { return Math.sin(p * Math.PI * 2) >= 0 ? 1 : -1; }
-  function triangle(p) {
-    const x = p % 1;
-    return x < 0.25 ? x * 4 : x < 0.75 ? 2 - x * 4 : (x - 1) * 4;
-  }
-  function sawtooth(p) {
-    const x = p % 1;
-    return x < 0.5 ? x * 2 : (x - 1) * 2;
-  }
-  function amMod(p)    {
-    // AM modulated: carrier * (1 + 0.6·sin(modulation))
-    const carrier    = Math.sin(p * Math.PI * 2 * 5);
-    const modulator  = 0.7 + 0.6 * Math.sin(p * Math.PI * 2 * 0.8);
-    return carrier * modulator;
-  }
-  function pwm(p) {
-    // Pulse-width modulated — duty cycle oscillates over time
-    const duty = 0.3 + 0.25 * Math.sin(p * Math.PI * 0.3);
-    return (p % 1) < duty ? 1 : -1;
-  }
+  function sine(p)     { return Math.sin(p*Math.PI*2); }
+  function square(p)   { return Math.sin(p*Math.PI*2)>=0?1:-1; }
+  function triangle(p) { var x=p%1; return x<0.25?x*4:x<0.75?2-x*4:(x-1)*4; }
+  function sawtooth(p) { var x=p%1; return x<0.5?x*2:(x-1)*2; }
+  function amMod(p)    { return Math.sin(p*Math.PI*2*5)*(0.7+0.6*Math.sin(p*Math.PI*2*0.8)); }
+  function pwm(p)      { var d=0.3+0.25*Math.sin(p*Math.PI*0.3); return (p%1)<d?1:-1; }
 
-  const WAVEFORMS = {
-    sine:     { fn: sine,     label: 'SINE',      freqs: [1.0, 2.0, 1.5], harmonics: 1 },
-    square:   { fn: square,   label: 'SQUARE',    freqs: [0.8, 1.6, 1.2], harmonics: 1 },
-    triangle: { fn: triangle, label: 'TRIANGLE',  freqs: [1.2, 2.4, 0.9], harmonics: 1 },
-    sawtooth: { fn: sawtooth, label: 'SAWTOOTH',  freqs: [1.0, 2.0, 1.4], harmonics: 1 },
-    am:       { fn: amMod,    label: 'AM MOD',    freqs: [2.4, 4.8, 3.6], harmonics: 1 },
-    pwm:      { fn: pwm,      label: 'PWM',       freqs: [1.5, 3.0, 2.0], harmonics: 1 },
+  var WAVEFORMS = {
+    sine:     {fn:sine,     label:'SINE',     freqs:[1.0,2.0,1.5]},
+    square:   {fn:square,   label:'SQUARE',   freqs:[0.8,1.6,1.2]},
+    triangle: {fn:triangle, label:'TRIANGLE', freqs:[1.2,2.4,0.9]},
+    sawtooth: {fn:sawtooth, label:'SAWTOOTH', freqs:[1.0,2.0,1.4]},
+    am:       {fn:amMod,    label:'AM MOD',   freqs:[2.4,4.8,3.6]},
+    pwm:      {fn:pwm,      label:'PWM',      freqs:[1.5,3.0,2.0]},
   };
 
-  let activeWave = 'sine';
-  let t = 0;
-  let freqIdx = 0;
-  let freqTimer = 0;
-  let transitionAlpha = 1;    // for smooth crossfade when switching waveforms
-  let prevWaveFn = null;
-  let blendT = 0;             // 0→1 blend progress
-
-  // ── Resize handling ──────────────────────────────────────────────────────
-  let W = 0, H = 0, DPR = window.devicePixelRatio || 1;
+  var activeWave='sine', t=0, freqIdx=0, freqTimer=0, prevWaveFn=null, blendT=0;
+  var W=0, H=0, DPR=window.devicePixelRatio||1;
 
   function resize() {
-    DPR = window.devicePixelRatio || 1;
-    W = canvas.offsetWidth;
-    H = canvas.offsetHeight;
-    canvas.width  = W * DPR;
-    canvas.height = H * DPR;
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.scale(DPR, DPR);
+    DPR=window.devicePixelRatio||1; W=canvas.offsetWidth; H=canvas.offsetHeight;
+    canvas.width=W*DPR; canvas.height=H*DPR;
+    ctx.setTransform(1,0,0,1,0,0); ctx.scale(DPR,DPR);
   }
-
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', function() { setTimeout(resize, 100); });
   resize();
 
-  // ── Grid ─────────────────────────────────────────────────────────────────
   function drawGrid() {
-    ctx.save();
-    ctx.strokeStyle = 'rgba(77,240,255,0.04)';
-    ctx.lineWidth = 0.5;
-    const cols = 12, rows = 4;
-    for (let i = 0; i <= cols; i++) {
-      const x = (i / cols) * W;
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    }
-    for (let i = 0; i <= rows; i++) {
-      const y = (i / rows) * H;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
-    // Brighter centre axis
-    ctx.strokeStyle = 'rgba(77,240,255,0.1)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
-    ctx.restore();
+    ctx.save(); ctx.strokeStyle='rgba(77,240,255,0.04)'; ctx.lineWidth=0.5;
+    for(var i=0;i<=12;i++){var x=(i/12)*W;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(var j=0;j<=4;j++){var y=(j/4)*H;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    ctx.strokeStyle='rgba(77,240,255,0.1)'; ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke(); ctx.restore();
   }
 
-  // ── Single waveform path ─────────────────────────────────────────────────
-  function buildPath(waveFn, speed, amp) {
+  function buildPath(fn, speed) {
     ctx.beginPath();
-    const samples = W;
-    for (let px = 0; px <= samples; px++) {
-      const progress = px / samples;
-      const phase    = progress * 3 + t * speed;
-      const y        = waveFn(phase) * amp;
-      const cy       = H / 2 - y * (H * 0.42);
-      if (px === 0) ctx.moveTo(px, cy);
-      else          ctx.lineTo(px, cy);
+    for(var px=0;px<=W;px++){
+      var ph=px/W*3+t*speed, y=fn(ph), cy=H/2-y*(H*0.42);
+      px===0?ctx.moveTo(px,cy):ctx.lineTo(px,cy);
     }
   }
 
-  // ── Draw with glow ───────────────────────────────────────────────────────
-  function drawWaveform(waveFn, alpha) {
-    if (!waveFn || alpha <= 0) return;
-    const def = Object.values(WAVEFORMS).find(w => w.fn === waveFn) || WAVEFORMS.sine;
-    const speed = def.freqs[freqIdx % def.freqs.length];
-
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.lineJoin = 'round';
-    ctx.lineCap  = 'round';
-
-    // Glow layer
-    buildPath(waveFn, speed, 1);
-    ctx.strokeStyle = 'rgba(77,240,255,0.18)';
-    ctx.lineWidth = 8;
-    ctx.filter = 'blur(6px)';
-    ctx.stroke();
-    ctx.filter = 'none';
-
-    // Mid layer
-    buildPath(waveFn, speed, 1);
-    ctx.strokeStyle = 'rgba(77,240,255,0.45)';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    // Crisp top layer
-    buildPath(waveFn, speed, 1);
-    ctx.strokeStyle = 'rgba(77,240,255,0.92)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
+  function drawWaveform(fn, alpha) {
+    if (!fn||alpha<=0) return;
+    var keys=Object.keys(WAVEFORMS), def=null;
+    for(var k=0;k<keys.length;k++){if(WAVEFORMS[keys[k]].fn===fn){def=WAVEFORMS[keys[k]];break;}}
+    if(!def) def=WAVEFORMS.sine;
+    var speed=def.freqs[freqIdx%def.freqs.length];
+    ctx.save(); ctx.globalAlpha=alpha; ctx.lineJoin='round'; ctx.lineCap='round';
+    buildPath(fn,speed); ctx.strokeStyle='rgba(77,240,255,0.18)'; ctx.lineWidth=8; ctx.filter='blur(6px)'; ctx.stroke(); ctx.filter='none';
+    buildPath(fn,speed); ctx.strokeStyle='rgba(77,240,255,0.45)'; ctx.lineWidth=2.5; ctx.stroke();
+    buildPath(fn,speed); ctx.strokeStyle='rgba(77,240,255,0.92)'; ctx.lineWidth=1.5; ctx.stroke();
     ctx.restore();
   }
 
-  // ── Scan line ────────────────────────────────────────────────────────────
   function drawScan() {
-    const scanX = ((t * 28) % (W + 60)) - 30;
-    const g = ctx.createLinearGradient(scanX - 40, 0, scanX + 16, 0);
-    g.addColorStop(0, 'transparent');
-    g.addColorStop(1, 'rgba(77,240,255,0.06)');
-    ctx.fillStyle = g;
-    ctx.fillRect(scanX - 40, 0, 56, H);
+    var scanX=((t*28)%(W+60))-30, g=ctx.createLinearGradient(scanX-40,0,scanX+16,0);
+    g.addColorStop(0,'transparent'); g.addColorStop(1,'rgba(77,240,255,0.06)');
+    ctx.fillStyle=g; ctx.fillRect(scanX-40,0,56,H);
   }
 
-  // ── Main loop ────────────────────────────────────────────────────────────
-  function animate() {
-    ctx.clearRect(0, 0, W, H);
-    drawGrid();
-    drawScan();
-
-    const def = WAVEFORMS[activeWave];
-
-    if (prevWaveFn && blendT < 1) {
-      // Cross-fade between old and new waveform
-      blendT = Math.min(blendT + 0.05, 1);
-      drawWaveform(prevWaveFn, 1 - blendT);
-      drawWaveform(def.fn, blendT);
-      if (blendT >= 1) prevWaveFn = null;
-    } else {
-      drawWaveform(def.fn, 1);
+  function animateOsc() {
+    ctx.clearRect(0,0,W,H); drawGrid(); drawScan();
+    var def=WAVEFORMS[activeWave];
+    if (prevWaveFn && blendT<1) {
+      blendT=Math.min(blendT+0.05,1);
+      drawWaveform(prevWaveFn,1-blendT); drawWaveform(def.fn,blendT);
+      if (blendT>=1) prevWaveFn=null;
+    } else { drawWaveform(def.fn,1); }
+    t+=0.013; freqTimer++;
+    if (freqTimer>200) {
+      freqIdx=(freqIdx+1)%3;
+      if (freqLabel) freqLabel.textContent='f='+def.freqs[freqIdx].toFixed(1)+' kHz';
+      freqTimer=0;
     }
-
-    t += 0.013;
-
-    // Cycle frequency label
-    freqTimer++;
-    if (freqTimer > 200) {
-      freqIdx = (freqIdx + 1) % 3;
-      const f = def.freqs[freqIdx];
-      if (freqLabel) freqLabel.textContent = `f = ${f.toFixed(1)} kHz`;
-      freqTimer = 0;
-    }
-
-    requestAnimationFrame(animate);
+    requestAnimationFrame(animateOsc);
   }
 
-  // ── Waveform switcher (called from HTML buttons) ──────────────────────────
   window.setOscWave = function(type) {
-    if (type === activeWave) return;
-    prevWaveFn = WAVEFORMS[activeWave].fn;
-    blendT = 0;
-    activeWave = type;
-    freqTimer = 0;
-    freqIdx = 0;
-    const def = WAVEFORMS[type];
-    if (freqLabel) freqLabel.textContent = `f = ${def.freqs[0].toFixed(1)} kHz`;
-    if (waveLabel) waveLabel.textContent = def.label;
-
-    // Update button states
-    document.querySelectorAll('.osc-wave-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.wave === type);
+    if (type===activeWave) return;
+    prevWaveFn=WAVEFORMS[activeWave].fn; blendT=0; activeWave=type; freqTimer=0; freqIdx=0;
+    var def=WAVEFORMS[type];
+    if (freqLabel) freqLabel.textContent='f='+def.freqs[0].toFixed(1)+' kHz';
+    if (waveLabel) waveLabel.textContent=def.label;
+    document.querySelectorAll('.osc-wave-btn').forEach(function(b){
+      b.classList.toggle('active',b.dataset.wave===type);
     });
   };
-
-  animate();
+  animateOsc();
 })();
 
-
-// ===== CUSTOM CURSOR — clean minimal crosshair =====
+// ===== CUSTOM CURSOR (desktop only) =====
 (function () {
-  // Only on non-touch devices
   if (window.matchMedia('(hover: none)').matches) return;
+  if (window.innerWidth < 768) return;
 
-  const el = document.createElement('div');
-  el.id = 'evalCursor';
-  el.style.cssText = [
-    'position:fixed',
-    'top:0', 'left:0',
-    'z-index:99999',
-    'pointer-events:none',
-    'will-change:transform',
-    // Two arms of the crosshair via box-shadow
-    'width:1px', 'height:16px',
-    'background:rgba(77,240,255,0.85)',
-    'transform:translate(-50%,-50%)',
-  ].join(';');
+  function mk(styles) {
+    var d=document.createElement('div');
+    d.style.cssText=styles; document.body.appendChild(d); return d;
+  }
+  var base='position:fixed;top:0;left:0;z-index:99999;pointer-events:none;will-change:transform;';
+  var el  = mk(base+'width:1px;height:16px;background:rgba(77,240,255,0.85);transform:translate(-50%,-50%)');
+  var elH = mk(base+'width:16px;height:1px;background:rgba(77,240,255,0.85);transform:translate(-50%,-50%)');
+  var dot = mk(base+'width:3px;height:3px;border-radius:50%;background:#4df0ff;transform:translate(-50%,-50%);transition:width .15s,height .15s,opacity .15s');
 
-  // Horizontal arm via pseudo — we'll use a second div instead
-  const elH = document.createElement('div');
-  elH.style.cssText = [
-    'position:fixed',
-    'top:0', 'left:0',
-    'z-index:99999',
-    'pointer-events:none',
-    'will-change:transform',
-    'width:16px', 'height:1px',
-    'background:rgba(77,240,255,0.85)',
-    'transform:translate(-50%,-50%)',
-  ].join(';');
+  document.addEventListener('mousemove', function(e) {
+    var pos='translate('+e.clientX+'px,'+e.clientY+'px) translate(-50%,-50%)';
+    el.style.transform=elH.style.transform=dot.style.transform=pos;
+  }, {passive:true});
 
-  // Center dot
-  const dot = document.createElement('div');
-  dot.style.cssText = [
-    'position:fixed',
-    'top:0', 'left:0',
-    'z-index:99999',
-    'pointer-events:none',
-    'will-change:transform',
-    'width:3px', 'height:3px',
-    'border-radius:50%',
-    'background:rgba(77,240,255,1)',
-    'transform:translate(-50%,-50%)',
-    'transition:width 0.15s,height 0.15s,opacity 0.15s',
-  ].join(';');
-
-  document.body.appendChild(el);
-  document.body.appendChild(elH);
-  document.body.appendChild(dot);
-
-  let x = -100, y = -100;
-
-  document.addEventListener('mousemove', e => {
-    x = e.clientX; y = e.clientY;
-    const pos = `translate(${x}px,${y}px) translate(-50%,-50%)`;
-    el.style.transform   = pos;
-    elH.style.transform  = pos;
-    dot.style.transform  = pos;
-  }, { passive: true });
-
-  // Grow dot on interactive elements
-  document.addEventListener('mouseover', e => {
-    if (e.target.closest('a, button, [role="button"], input, select, textarea')) {
-      dot.style.width   = '8px';
-      dot.style.height  = '8px';
-      dot.style.opacity = '0.5';
-    } else {
-      dot.style.width   = '3px';
-      dot.style.height  = '3px';
-      dot.style.opacity = '1';
-    }
+  document.addEventListener('mouseover', function(e) {
+    var over=!!e.target.closest('a,button,[role="button"],input,select,textarea,.theme-pill');
+    dot.style.width=over?'8px':'3px';
+    dot.style.height=over?'8px':'3px';
+    dot.style.opacity=over?'0.5':'1';
   });
 })();
-
-

@@ -185,15 +185,79 @@
     }
 
     .auth-switch a:hover { text-decoration: underline; }
+
+    /* ── LIGHT THEME OVERRIDES ──────────────────── */
+    [data-theme="light"] .auth-card {
+      background: rgba(255,255,255,0.92);
+      border-color: var(--border-solid);
+    }
+    [data-theme="light"] .auth-card h1 { color: var(--text); }
+    [data-theme="light"] .auth-card .auth-sub { color: var(--text-muted); }
+    [data-theme="light"] .auth-divider span { background: rgba(255,255,255,0.92); color: var(--text-dim); }
+    [data-theme="light"] .form-group label { color: var(--text-dim); }
+    [data-theme="light"] .form-group input {
+      background: rgba(0,0,0,0.04); color: var(--text);
+      border-color: var(--border-solid);
+    }
+    [data-theme="light"] .form-group input::placeholder { color: var(--text-dim); }
+    [data-theme="light"] .auth-switch { color: var(--text-muted); }
+    [data-theme="light"] .auth-back   { color: var(--text-muted); }
+    [data-theme="light"] #dashDetails > div {
+      background: rgba(0,0,0,0.03);
+      border-color: var(--border);
+    }
+    [data-theme="light"] #dashDetails > div > div:last-child { color: var(--text); }
+
+    /* ── LIGHT THEME ──── */
+    [data-theme="light"] body { background: var(--bg); }
+    [data-theme="light"] .auth-container .auth-back { color: var(--text-muted); }
+    [data-theme="light"] .auth-card {
+      background: rgba(255,255,255,0.97) !important;
+      border-color: var(--border-solid) !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    [data-theme="light"] .auth-card h1 { color: var(--text); }
+    [data-theme="light"] .auth-card .auth-sub { color: var(--text-muted); }
+    [data-theme="light"] .form-group label { color: rgba(13,17,23,0.5); }
+    [data-theme="light"] .input-wrap i { color: rgba(13,17,23,0.3); }
+    [data-theme="light"] .form-group input {
+      background: #fff; border-color: var(--border-solid);
+      color: var(--text);
+    }
+    [data-theme="light"] .form-group input::placeholder { color: rgba(13,17,23,0.3); }
+    [data-theme="light"] .form-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,136,170,0.08);
+    }
+    [data-theme="light"] .auth-submit { background: var(--accent); color: #fff; }
+    [data-theme="light"] .auth-divider::before { background: var(--border-solid); }
+    [data-theme="light"] .auth-divider span { background: #fff; color: var(--text-dim); }
+    [data-theme="light"] .auth-switch { color: var(--text-muted); }
+    /* Dashboard cards light */
+    [data-theme="light"] #dashCard { background: rgba(255,255,255,0.97) !important; border-color: var(--border-solid) !important; }
+    [data-theme="light"] #dashCard h1 { color: var(--text); }
+    [data-theme="light"] #dashCard .auth-sub { color: var(--text-muted); }
+    [data-theme="light"] #pendingCard { background: rgba(255,255,255,0.97) !important; }
+    [data-theme="light"] #pendingCard h1 { color: var(--text); }
+    [data-theme="light"] #pendingCard .auth-sub { color: var(--text-muted); }
+    /* ── RESPONSIVE ──── */
+    @media (max-width: 480px) {
+      .auth-container { padding: 1rem; }
+      .auth-card { padding: 2rem 1.5rem; }
+      .auth-card h1 { font-size: 1.5rem; }
+    }
+    @media (max-width: 380px) {
+      .auth-card { padding: 1.5rem 1.25rem; }
+      .auth-card h1 { font-size: 1.3rem; }
+      #dashDetails { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- FLOATING THEME TOGGLE -->
-  <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme"
-    style="position:fixed;top:1.1rem;right:1.25rem;z-index:2000">
-    <i class="fas fa-moon" id="themeIcon"></i>
-  </button>
+  <!-- FLOATING THEME SWITCHER -->
+  <div id="themeToggle" role="group" aria-label="Theme selector"
+    style="position:fixed;top:1.1rem;right:1.25rem;z-index:2000;display:flex"></div>
   <canvas id="particleCanvas"></canvas>
 
   <div class="auth-container">
