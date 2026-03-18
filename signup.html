@@ -104,6 +104,7 @@
       border-radius:2px; padding:0.8rem 1rem 0.8rem 2.5rem;
       font-family:var(--font-body); font-size:0.88rem; color:var(--input-text);
       outline:none; transition:border-color 0.3s, background 0.3s, box-shadow 0.3s;
+      appearance:none;
       -webkit-appearance:none;
     }
     .input-wrap input::placeholder { color:var(--input-placeholder); }
@@ -497,6 +498,7 @@
 
   // ── STATE ────────────────────────────────────────────────────────────────
   let _email = '', _virtualId = '', _pendingUser = null;
+  let _isVerifyingOtp = false;
   // Captured at step transitions to prevent autofill corruption
   let _capturedEmail = '', _capturedFirstName = '', _capturedLastName = '';
   let _capturedPhone = '', _capturedVirtualId = '', _capturedYear = '';
@@ -648,6 +650,7 @@
       email,
       password,
       options: {
+        emailRedirectTo: `${location.origin}/verify.html`,
         // emailRedirectTo is used for magic-link flow (fallback)
         // For OTP flow we use the 6-digit code in the confirmation email
         data: { first_name: firstName, last_name: lastName, virtual_id: virtualId }
@@ -664,6 +667,15 @@
         showGlobalErr('Password too weak. Use 8+ characters with letters and numbers.');
       else
         showGlobalErr(error.message);
+      return;
+    }
+
+    // If email confirmation is disabled in project settings, sign-up may return
+    // an active session immediately. Handle that gracefully.
+    if (data?.session?.user?.email_confirmed_at || data?.user?.email_confirmed_at) {
+      const activeUser = data.session?.user || data.user;
+      await insertMemberRow(activeUser);
+      showSuccess(virtualId);
       return;
     }
 
@@ -717,6 +729,7 @@
 
   // ── VERIFY OTP ────────────────────────────────────────────────────────────
   async function doVerifyOTP() {
+    if (_isVerifyingOtp) return;
     const token = getOtpCode();
     const errEl = document.getElementById('otpErr');
     const btn   = document.getElementById('otpBtn');
@@ -726,6 +739,7 @@
       errEl.textContent = 'Please enter all 6 digits.'; return;
     }
 
+  _isVerifyingOtp = true;
     btn.disabled = true; btn.textContent = 'Verifying…';
 
     const { data, error } = await db.auth.verifyOtp({
@@ -735,6 +749,7 @@
     });
 
     if (error) {
+      _isVerifyingOtp = false;
       btn.disabled = false; btn.textContent = 'Verify & Complete Registration →';
       if (error.message.toLowerCase().includes('expired'))
         errEl.textContent = 'Code expired — please request a new one below.';
@@ -753,6 +768,7 @@
     // Verified! Now insert the member row
     btn.textContent = 'Setting up your profile…';
     await insertMemberRow(data.user || _pendingUser);
+    _isVerifyingOtp = false;
     showSuccess(_virtualId);
   }
 
