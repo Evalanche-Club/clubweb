@@ -331,7 +331,7 @@
         <div class="form-group">
           <label>Email Address *</label>
           <div class="input-wrap"><i class="fas fa-envelope fi"></i>
-            <input type="email" id="email" placeholder="arjun@jainuniversity.ac.in" autocomplete="email">
+            <input type="email" id="email" placeholder="arjun@jainuniversity.ac.in" autocomplete="email" oninput="if(this.value) _capturedEmail=this.value.trim().toLowerCase()">
           </div>
           <div class="field-hint">Use your Jain University email where possible.</div>
           <div class="field-error" id="err-email"></div>
@@ -497,6 +497,10 @@
 
   // ── STATE ────────────────────────────────────────────────────────────────
   let _email = '', _virtualId = '', _pendingUser = null;
+  // Captured at step transitions to prevent autofill corruption
+  let _capturedEmail = '', _capturedFirstName = '', _capturedLastName = '';
+  let _capturedPhone = '', _capturedVirtualId = '', _capturedYear = '';
+  let _capturedSection = '', _capturedInterest = '';
 
   // ── STEP NAV ─────────────────────────────────────────────────────────────
   function setStep(n) {
@@ -509,7 +513,23 @@
     });
   }
 
-  function goNext(n) { if (validate(n)) setStep(n+1); }
+  function goNext(n) {
+    if (!validate(n)) return;
+    // Capture values the instant user clicks Next — before autofill can corrupt hidden fields
+    if (n === 1) {
+      _capturedEmail     = document.getElementById('email').value.trim().toLowerCase();
+      _capturedFirstName = document.getElementById('firstName').value.trim();
+      _capturedLastName  = document.getElementById('lastName').value.trim();
+      _capturedPhone     = document.getElementById('phone').value.trim();
+    }
+    if (n === 2) {
+      _capturedVirtualId = document.getElementById('virtualId').value.trim().toUpperCase();
+      _capturedYear      = document.getElementById('year').value;
+      _capturedSection   = document.getElementById('section').value;
+      _capturedInterest  = document.getElementById('interest').value;
+    }
+    setStep(n+1);
+  }
   function goPrev(n) { setStep(n-1); }
 
   // ── VALIDATION ────────────────────────────────────────────────────────────
@@ -602,16 +622,17 @@
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = 'Creating account…';
 
-    // Read values
-    const email     = document.getElementById('email').value.trim().toLowerCase();
+    // Read values — use _capturedEmail/_capturedVirtualId which were
+    // saved when the user actually typed them (prevents autofill corruption)
+    const email     = _capturedEmail || document.getElementById('email').value.trim().toLowerCase();
     const password  = document.getElementById('password').value;
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName  = document.getElementById('lastName').value.trim();
-    const phone     = document.getElementById('phone').value.trim();
-    const virtualId = document.getElementById('virtualId').value.trim().toUpperCase();
-    const year      = document.getElementById('year').value;
-    const section   = document.getElementById('section').value;
-    const interest  = document.getElementById('interest').value;
+    const firstName = _capturedFirstName || document.getElementById('firstName').value.trim();
+    const lastName  = _capturedLastName  || document.getElementById('lastName').value.trim();
+    const phone     = _capturedPhone     || document.getElementById('phone').value.trim();
+    const virtualId = _capturedVirtualId || document.getElementById('virtualId').value.trim().toUpperCase();
+    const year      = _capturedYear      || document.getElementById('year').value;
+    const section   = _capturedSection   || document.getElementById('section').value;
+    const interest  = _capturedInterest  || document.getElementById('interest').value;
 
     _email     = email;
     _virtualId = virtualId;
