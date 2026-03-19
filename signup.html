@@ -595,8 +595,15 @@
   }
 
   function showOtpScreen(email, vid) {
+    const liveEmail = (document.getElementById('email')?.value || '').trim().toLowerCase();
+    const safeEmail = (email || _email || _capturedEmail || liveEmail || '—').toLowerCase();
+
+    if (safeEmail && safeEmail !== '—') {
+      _email = safeEmail;
+    }
+
     hideSteps();
-    document.getElementById('otpEmail').textContent = email;
+    document.getElementById('otpEmail').textContent = safeEmail;
     document.getElementById('otpScreen').style.display = 'block';
     setTimeout(() => document.getElementById('d0').focus(), 100);
   }
@@ -626,7 +633,8 @@
 
     // Read values — use _capturedEmail/_capturedVirtualId which were
     // saved when the user actually typed them (prevents autofill corruption)
-    const email     = _capturedEmail || document.getElementById('email').value.trim().toLowerCase();
+    const liveEmail = document.getElementById('email').value.trim().toLowerCase();
+    const email     = liveEmail || _capturedEmail;
     const password  = document.getElementById('password').value;
     const firstName = _capturedFirstName || document.getElementById('firstName').value.trim();
     const lastName  = _capturedLastName  || document.getElementById('lastName').value.trim();
@@ -661,8 +669,17 @@
 
     if (error) {
       const m = error.message.toLowerCase();
-      if (m.includes('already registered') || m.includes('already exists'))
-        showGlobalErr('This email is already registered. Try logging in instead.');
+      if (m.includes('already registered') || m.includes('already exists')) {
+        // Existing account might be unverified — try sending fresh signup confirmation code/link
+        const { error: resendErr } = await db.auth.resend({ type: 'signup', email });
+        if (resendErr) {
+          showGlobalErr('This email is already registered. Try logging in instead.');
+        } else {
+          showOtpScreen(email, virtualId);
+          const otpErr = document.getElementById('otpErr');
+          if (otpErr) otpErr.textContent = 'A new verification code has been sent.';
+        }
+      }
       else if (m.includes('password'))
         showGlobalErr('Password too weak. Use 8+ characters with letters and numbers.');
       else
