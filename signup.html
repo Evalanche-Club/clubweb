@@ -104,7 +104,6 @@
       border-radius:2px; padding:0.8rem 1rem 0.8rem 2.5rem;
       font-family:var(--font-body); font-size:0.88rem; color:var(--input-text);
       outline:none; transition:border-color 0.3s, background 0.3s, box-shadow 0.3s;
-      appearance:none;
       -webkit-appearance:none;
     }
     .input-wrap input::placeholder { color:var(--input-placeholder); }
@@ -332,7 +331,12 @@
         <div class="form-group">
           <label>Email Address *</label>
           <div class="input-wrap"><i class="fas fa-envelope fi"></i>
-            <input type="email" id="email" placeholder="arjun@jainuniversity.ac.in" autocomplete="email" oninput="if(this.value) _capturedEmail=this.value.trim().toLowerCase()">
+            <input type="email" id="email" placeholder="arjun@jainuniversity.ac.in" 
+                autocomplete="new-password"
+                oninput="_capturedEmail=this.value.trim().toLowerCase()"
+                onchange="_capturedEmail=this.value.trim().toLowerCase()"
+                onblur="_capturedEmail=this.value.trim().toLowerCase()">
+              <input type="hidden" id="emailMirror" name="emailMirror">
           </div>
           <div class="field-hint">Use your Jain University email where possible.</div>
           <div class="field-error" id="err-email"></div>
@@ -498,7 +502,6 @@
 
   // ── STATE ────────────────────────────────────────────────────────────────
   let _email = '', _virtualId = '', _pendingUser = null;
-  let _isVerifyingOtp = false;
   // Captured at step transitions to prevent autofill corruption
   let _capturedEmail = '', _capturedFirstName = '', _capturedLastName = '';
   let _capturedPhone = '', _capturedVirtualId = '', _capturedYear = '';
@@ -519,10 +522,19 @@
     if (!validate(n)) return;
     // Capture values the instant user clicks Next — before autofill can corrupt hidden fields
     if (n === 1) {
-      _capturedEmail     = document.getElementById('email').value.trim().toLowerCase();
+      // Read directly from the field right now (user just clicked Next)
+      const emailField = document.getElementById('email');
+      _capturedEmail     = emailField.value.trim().toLowerCase();
       _capturedFirstName = document.getElementById('firstName').value.trim();
       _capturedLastName  = document.getElementById('lastName').value.trim();
       _capturedPhone     = document.getElementById('phone').value.trim();
+      // Store in hidden mirror so autofill cannot overwrite it
+      const mirror = document.getElementById('emailMirror');
+      if (mirror) mirror.value = _capturedEmail;
+      // Also disable the email field to prevent autofill from touching it
+      emailField.setAttribute('readonly', 'true');
+      emailField.setAttribute('tabindex', '-1');
+      console.log('[EVALANCHE] Email captured:', _capturedEmail);
     }
     if (n === 2) {
       _capturedVirtualId = document.getElementById('virtualId').value.trim().toUpperCase();
@@ -595,15 +607,8 @@
   }
 
   function showOtpScreen(email, vid) {
-    const liveEmail = (document.getElementById('email')?.value || '').trim().toLowerCase();
-    const safeEmail = (email || _email || _capturedEmail || liveEmail || '—').toLowerCase();
-
-    if (safeEmail && safeEmail !== '—') {
-      _email = safeEmail;
-    }
-
     hideSteps();
-    document.getElementById('otpEmail').textContent = safeEmail;
+    document.getElementById('otpEmail').textContent = email;
     document.getElementById('otpScreen').style.display = 'block';
     setTimeout(() => document.getElementById('d0').focus(), 100);
   }
@@ -633,8 +638,12 @@
 
     // Read values — use _capturedEmail/_capturedVirtualId which were
     // saved when the user actually typed them (prevents autofill corruption)
-    const liveEmail = document.getElementById('email').value.trim().toLowerCase();
-    const email     = liveEmail || _capturedEmail;
+    // Priority: captured var > hidden mirror > DOM field
+    const mirror  = document.getElementById('emailMirror');
+    const email   = _capturedEmail
+                 || (mirror && mirror.value ? mirror.value : '')
+                 || document.getElementById('email').value.trim().toLowerCase();
+    console.log('[EVALANCHE] Using email for signup:', email);
     const password  = document.getElementById('password').value;
     const firstName = _capturedFirstName || document.getElementById('firstName').value.trim();
     const lastName  = _capturedLastName  || document.getElementById('lastName').value.trim();
@@ -647,6 +656,11 @@
     _email     = email;
     _virtualId = virtualId;
 
+    // Safety check: warn if email looks like it could be wrong
+    if (!email || email.includes('qpoire') || email.includes('admin')) {
+      console.error('[EVALANCHE] Suspicious email detected:', email, '— check autofill');
+    }
+
     // Save profile for use after verification
     try { localStorage.setItem('evalanche_pending_profile', JSON.stringify(
       { firstName, lastName, email, phone, virtualId, year, section, interest }
@@ -658,7 +672,6 @@
       email,
       password,
       options: {
-        emailRedirectTo: `${location.origin}/verify.html`,
         // emailRedirectTo is used for magic-link flow (fallback)
         // For OTP flow we use the 6-digit code in the confirmation email
         data: { first_name: firstName, last_name: lastName, virtual_id: virtualId }
@@ -669,30 +682,12 @@
 
     if (error) {
       const m = error.message.toLowerCase();
-      if (m.includes('already registered') || m.includes('already exists')) {
-        // Existing account might be unverified — try sending fresh signup confirmation code/link
-        const { error: resendErr } = await db.auth.resend({ type: 'signup', email });
-        if (resendErr) {
-          showGlobalErr('This email is already registered. Try logging in instead.');
-        } else {
-          showOtpScreen(email, virtualId);
-          const otpErr = document.getElementById('otpErr');
-          if (otpErr) otpErr.textContent = 'A new verification code has been sent.';
-        }
-      }
+      if (m.includes('already registered') || m.includes('already exists'))
+        showGlobalErr('This email is already registered. Try logging in instead.');
       else if (m.includes('password'))
         showGlobalErr('Password too weak. Use 8+ characters with letters and numbers.');
       else
         showGlobalErr(error.message);
-      return;
-    }
-
-    // If email confirmation is disabled in project settings, sign-up may return
-    // an active session immediately. Handle that gracefully.
-    if (data?.session?.user?.email_confirmed_at || data?.user?.email_confirmed_at) {
-      const activeUser = data.session?.user || data.user;
-      await insertMemberRow(activeUser);
-      showSuccess(virtualId);
       return;
     }
 
@@ -746,7 +741,6 @@
 
   // ── VERIFY OTP ────────────────────────────────────────────────────────────
   async function doVerifyOTP() {
-    if (_isVerifyingOtp) return;
     const token = getOtpCode();
     const errEl = document.getElementById('otpErr');
     const btn   = document.getElementById('otpBtn');
@@ -756,7 +750,6 @@
       errEl.textContent = 'Please enter all 6 digits.'; return;
     }
 
-  _isVerifyingOtp = true;
     btn.disabled = true; btn.textContent = 'Verifying…';
 
     const { data, error } = await db.auth.verifyOtp({
@@ -766,7 +759,6 @@
     });
 
     if (error) {
-      _isVerifyingOtp = false;
       btn.disabled = false; btn.textContent = 'Verify & Complete Registration →';
       if (error.message.toLowerCase().includes('expired'))
         errEl.textContent = 'Code expired — please request a new one below.';
@@ -785,7 +777,6 @@
     // Verified! Now insert the member row
     btn.textContent = 'Setting up your profile…';
     await insertMemberRow(data.user || _pendingUser);
-    _isVerifyingOtp = false;
     showSuccess(_virtualId);
   }
 
@@ -805,7 +796,7 @@
 
     const meta = user.user_metadata || {};
 
-    const { error } = await db.from('members').upsert({
+    const { error } = await db.from('members').insert({
       first_name:   profile.firstName  || meta.first_name  || '',
       last_name:    profile.lastName   || meta.last_name   || '',
       email:        user.email,
@@ -817,7 +808,7 @@
       role:         'member',
       status:       'pending',
       joined_batch: new Date().getFullYear().toString(),
-    }, { onConflict: 'email' });
+    });
 
     if (error) {
       console.error('Member insert error:', error.message);

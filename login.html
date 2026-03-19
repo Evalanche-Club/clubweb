@@ -72,7 +72,7 @@
       font-family: var(--font-display);
       font-size: 1.8rem;
       font-weight: 800;
-      color: #fff;
+      color: var(--text);
       margin-bottom: 0.4rem;
     }
 
@@ -118,7 +118,7 @@
       padding: 0.85rem 1rem 0.85rem 2.6rem;
       font-family: var(--font-body);
       font-size: 0.9rem;
-      color: #fff;
+      color: var(--input-text);
       outline: none;
       transition: border-color 0.3s, background 0.3s;
     }
@@ -409,68 +409,24 @@
   });
 
   // ── Load member dashboard after successful login ───────────────────────────
-  async function ensureMemberRowFromAuthUser(user) {
-    if (!user?.email) return null;
-
-    const meta = user.user_metadata || {};
-    const fallbackVirtualId = (meta.virtual_id || user.email.split('@')[0] || 'MEMBER').toUpperCase();
-
-    const { error } = await db.from('members').upsert({
-      email:        user.email,
-      first_name:   meta.first_name || user.email.split('@')[0] || 'Member',
-      last_name:    meta.last_name  || '',
-      virtual_id:   fallbackVirtualId,
-      year:         meta.year       || '',
-      section:      meta.section    || '',
-      interest:     meta.interest   || '',
-      phone:        meta.phone      || '',
-      role:         'member',
-      status:       'pending',
-      joined_batch: new Date().getFullYear().toString(),
-    }, { onConflict: 'email' });
-
-    if (error) {
-      console.error('Could not create member profile from auth user:', error.message);
-      return null;
-    }
-
-    const { data: created } = await db
-      .from('members')
-      .select('*')
-      .eq('email', user.email)
-      .maybeSingle();
-
-    return created || null;
-  }
-
   async function loadMemberDashboard(user) {
-    document.getElementById('forgotCard').style.display = 'none';
-    document.getElementById('pendingCard').style.display = 'none';
-    document.getElementById('dashCard').style.display = 'none';
     document.getElementById('loginCard').style.display = 'none';
 
     // Fetch member profile from database
-    let { data: member, error: fetchErr } = await db
+    const { data: member, error: fetchErr } = await db
       .from('members')
       .select('*')
       .eq('email', user.email)
       .maybeSingle();  // maybeSingle returns null instead of error if not found
 
-    if (fetchErr) {
-      console.error('Member fetch error:', fetchErr.message);
-    }
-
     // No member row at all — email confirmed but member row not created yet
-    // This can happen if verify flow was skipped or metadata sync failed
+    // This happens if verify.html hasn't been visited yet after signup
     if (!member) {
-      member = await ensureMemberRowFromAuthUser(user);
-
-      if (!member) {
-        document.getElementById('pendingCard').style.display = 'block';
-        const sub = document.querySelector('#pendingCard .auth-sub');
-        if (sub) sub.textContent = 'Your email is verified but your profile is being set up. If this persists, please contact the admin.';
-        return;
-      }
+      document.getElementById('pendingCard').style.display = 'block';
+      // Update pending card message
+      const sub = document.querySelector('#pendingCard .auth-sub');
+      if (sub) sub.textContent = 'Your email is verified but your profile is being set up. If this persists, please contact the admin.';
+      return;
     }
 
     if (member.status === 'pending') {
@@ -515,8 +471,6 @@
   // ── Logout ─────────────────────────────────────────────────────────────────
   async function doLogout() {
     await db.auth.signOut();
-    document.getElementById('pendingCard').style.display = 'none';
-    document.getElementById('forgotCard').style.display = 'none';
     document.getElementById('dashCard').style.display  = 'none';
     document.getElementById('loginCard').style.display = 'block';
     document.getElementById('loginEmail').value    = '';
