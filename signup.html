@@ -805,7 +805,7 @@
 
     const meta = user.user_metadata || {};
 
-    const { error } = await db.from('members').insert({
+    const { error } = await db.from('members').upsert({
       first_name:   profile.firstName  || meta.first_name  || '',
       last_name:    profile.lastName   || meta.last_name   || '',
       email:        user.email,
@@ -817,7 +817,7 @@
       role:         'member',
       status:       'pending',
       joined_batch: new Date().getFullYear().toString(),
-    });
+    }, { onConflict: 'email' });
 
     if (error) {
       console.error('Member insert error:', error.message);

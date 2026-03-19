@@ -817,6 +817,9 @@
       <div class="nav-item" onclick="showSection('announcements')">
         <i class="fas fa-bullhorn"></i> Announcements
       </div>
+      <div class="nav-item" onclick="showSection('requests')">
+        <i class="fas fa-inbox"></i> Requests
+      </div>
 
       <div class="sidebar-section-label">Configure</div>
       <div class="nav-item" onclick="showSection('settings')">
@@ -981,6 +984,37 @@
       </div>
       <div class="ann-list" id="annList">
         <div class="empty-state"><span class="spinner"></span> Loading…</div>
+      </div>
+    </div>
+
+    <!-- ── REQUESTS ── -->
+    <div class="page-section" id="sec-requests">
+      <div class="sec-header">
+        <div class="sec-title">Contact Requests</div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <div class="table-toolbar-title">Website Enquiries</div>
+          <div class="table-toolbar-actions">
+            <input class="tbl-search" type="text" placeholder="Search name, email, subject…"
+              oninput="filterRequests(this.value)">
+            <select class="tbl-search" style="width:140px;" onchange="filterRequestStatus(this.value)">
+              <option value="">All Status</option>
+              <option value="new">New</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>From</th><th>Email</th><th>Subject</th><th>Message</th><th>Status</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="requestsBody">
+            <tr class="loading-row"><td colspan="7"><span class="spinner"></span>Loading...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -1300,9 +1334,12 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 // ── State ────────────────────────────────────────────────────────────────────
 let allMembers = [];
 let allGallery = [];
+let allRequests = [];
 let galleryFilter = '';
 let memberSearch  = '';
 let memberStatusFilter = '';
+let requestSearch = '';
+let requestStatusFilter = '';
 
 // ════════════════════════════════════════════════════════════════════════════
 //  AUTH
@@ -1368,7 +1405,7 @@ function bootApp(user) {
 const sectionTitles = {
   dashboard:'Dashboard', members:'Members',
   gallery:'Gallery', events:'Events',
-  announcements:'Announcements', settings:'Site Settings'
+  announcements:'Announcements', requests:'Requests', settings:'Site Settings'
 };
 
 function showSection(name) {
@@ -1384,6 +1421,7 @@ function showSection(name) {
   const loaders = {
     members: loadMembers, gallery: loadGallery,
     events:  loadEvents,  announcements: loadAnnouncements,
+    requests: loadRequests,
     settings: loadSettings
   };
   if (loaders[name]) loaders[name]();
@@ -1901,6 +1939,83 @@ async function saveAnnouncement() {
   toast(id ? 'Updated.' : 'Announcement published.','success');
   closeModal('announcement');
   loadAnnouncements();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CONTACT REQUESTS
+// ════════════════════════════════════════════════════════════════════════════
+async function loadRequests() {
+  const { data, error } = await db.from('contact_requests').select('*').order('created_at',{ascending:false});
+  if (error) { toast(error.message,'error'); return; }
+  allRequests = data || [];
+  renderRequests();
+}
+
+function filterRequests(q)      { requestSearch = q;       renderRequests(); }
+function filterRequestStatus(v) { requestStatusFilter = v; renderRequests(); }
+
+function requestBadge(s) {
+  const map = { new:'badge-pending', in_progress:'badge-info', resolved:'badge-active' };
+  const label = (s || 'new').replace('_',' ');
+  return `<span class="badge ${map[s]||'badge-info'}">${label}</span>`;
+}
+
+function renderRequests() {
+  const tbody = document.getElementById('requestsBody');
+  if (!tbody) return;
+
+  let list = allRequests;
+  if (requestSearch) {
+    const q = requestSearch.toLowerCase();
+    list = list.filter(r =>
+      `${r.first_name || ''} ${r.last_name || ''}`.toLowerCase().includes(q) ||
+      (r.email || '').toLowerCase().includes(q) ||
+      (r.subject || '').toLowerCase().includes(q) ||
+      (r.message || '').toLowerCase().includes(q)
+    );
+  }
+  if (requestStatusFilter) list = list.filter(r => r.status === requestStatusFilter);
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">No requests found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(r => {
+    const name = `${r.first_name || ''} ${r.last_name || ''}`.trim() || '—';
+    const msg = (r.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const shortMsg = msg.length > 120 ? `${msg.slice(0,120)}…` : msg;
+    return `
+      <tr>
+        <td style="font-weight:600">${name}</td>
+        <td style="font-size:0.78rem;color:var(--muted)">${r.email || '—'}</td>
+        <td style="font-size:0.78rem">${r.subject || 'General'}</td>
+        <td style="font-size:0.75rem;max-width:280px;white-space:normal;line-height:1.45;color:var(--muted)">${shortMsg || '—'}</td>
+        <td>${requestBadge(r.status || 'new')}</td>
+        <td style="font-size:0.75rem;color:var(--muted)">${fmtDate(r.created_at)}</td>
+        <td><div class="actions-cell">
+          ${r.status !== 'resolved' ? `<button class="btn btn-primary btn-sm" onclick="setRequestStatus('${r.id}','resolved')">Resolve</button>` : ''}
+          ${r.status === 'new' ? `<button class="btn btn-outline btn-sm" onclick="setRequestStatus('${r.id}','in_progress')">In Progress</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="deleteRequest('${r.id}')">Delete</button>
+        </div></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function setRequestStatus(id, status) {
+  const { error } = await db.from('contact_requests').update({ status }).eq('id', id);
+  if (error) { toast(error.message,'error'); return; }
+  toast('Request updated.','success');
+  await loadRequests();
+}
+
+async function deleteRequest(id) {
+  if (!confirm('Delete this contact request?')) return;
+  const { error } = await db.from('contact_requests').delete().eq('id', id);
+  if (error) { toast(error.message,'error'); return; }
+  toast('Request deleted.','success');
+  await loadRequests();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
