@@ -12,7 +12,7 @@
    ============================================================ */
 
 const SUPABASE_URL  = 'https://ymprftmrojvmuvklyjay.supabase.co';
-const SUPABASE_ANON = 'YOUR_ANON_KEY_HERE';  // ← paste your anon key
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHJmdG1yb2p2bXV2a2x5amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDQ1NTksImV4cCI6MjA4OTA4MDU1OX0.kR9gnlaoAqs1LcdRO3t5DtG5rWKbpA3AyHKOhkF3RsM';  // ← paste your anon key
 
 // Storage bucket names (must match what you created in Supabase)
 const BUCKET_GALLERY = 'gallery';
