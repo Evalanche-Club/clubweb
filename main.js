@@ -469,12 +469,13 @@ function runCounter(el) {
 
   window.setAgMode = function (m) {
     mode = m;
-    var labels = { repulse: 'REPULSION MODE', attract: 'ATTRACTION MODE', chaos: 'CHAOS MODE' };
+    var labels = { repulse: 'REPULSE MODE', attract: 'ATTRACT MODE', chaos: 'CHAOS MODE' };
+    var ids    = { repulse: 'agRepulse',    attract: 'agAttract',    chaos: 'agChaos'    };
     var lbl = document.getElementById('agModeLabel');
     if (lbl) lbl.textContent = labels[m] || m.toUpperCase() + ' MODE';
-    ['agRepulse','agAttract','agChaos'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.classList.toggle('active', el.id === 'ag' + m.charAt(0).toUpperCase() + m.slice(1));
+    Object.keys(ids).forEach(function (key) {
+      var el = document.getElementById(ids[key]);
+      if (el) el.classList.toggle('active', key === m);
     });
   };
 })();
