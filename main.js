@@ -317,7 +317,169 @@ function runCounter(el) {
   loop();
 })();
 
-// ── 8. CUSTOM CURSOR (desktop only) ─────────────────────────────────────────
+// ── 8. ANTI-GRAVITY PHYSICS LAB ─────────────────────────────────────────────
+(function () {
+  var canvas = document.getElementById('antigravityCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+
+  var W = 0, H = 0, DPR = 1;
+  var mouse = { x: -9999, y: -9999, inside: false };
+  var mode  = 'repulse'; // 'repulse' | 'attract' | 'chaos'
+  var PARTICLE_COUNT = window.innerWidth < 600 ? 55 : 100;
+
+  function resize() {
+    DPR = window.devicePixelRatio || 1;
+    W   = canvas.offsetWidth;
+    H   = canvas.offsetHeight;
+    canvas.width  = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(DPR, DPR);
+  }
+  window.addEventListener('resize', function () { setTimeout(resize, 100); });
+  resize();
+
+  function AgParticle() { this.init(true); }
+  AgParticle.prototype.init = function (spread) {
+    this.x  = Math.random() * W;
+    this.y  = spread ? Math.random() * H : H + Math.random() * 20;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = -(Math.random() * 0.6 + 0.15); // always drifting upward
+    this.r  = Math.random() * 1.8 + 0.5;
+    this.op = Math.random() * 0.55 + 0.15;
+    this.life = 0;
+    this.maxLife = Math.random() * 350 + 150;
+  };
+  AgParticle.prototype.update = function () {
+    var dx = this.x - mouse.x;
+    var dy = this.y - mouse.y;
+    var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    var influence = Math.max(0, 1 - dist / 120);
+
+    if (mouse.inside && influence > 0) {
+      var force = influence * 2.2;
+      if (mode === 'repulse') {
+        this.vx += (dx / dist) * force * 0.08;
+        this.vy += (dy / dist) * force * 0.08;
+      } else if (mode === 'attract') {
+        this.vx -= (dx / dist) * force * 0.08;
+        this.vy -= (dy / dist) * force * 0.08;
+      } else {
+        // chaos: random impulse
+        this.vx += (Math.random() - 0.5) * force * 0.25;
+        this.vy += (Math.random() - 0.5) * force * 0.25;
+      }
+    }
+
+    // Anti-gravity: pull upward
+    this.vy -= 0.012;
+
+    // Gentle damping to prevent runaway speed
+    this.vx *= 0.98;
+    this.vy *= 0.98;
+
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life++;
+
+    // Wrap horizontally, reset when off top or too old
+    if (this.x < -5)  this.x = W + 5;
+    if (this.x > W+5) this.x = -5;
+    if (this.y < -15 || this.life > this.maxLife) this.init(false);
+  };
+  AgParticle.prototype.draw = function () {
+    var fade = Math.min(this.life / 50, 1) * Math.min((this.maxLife - this.life) / 50, 1);
+    ctx.globalAlpha = this.op * fade;
+    var g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r * 3);
+    g.addColorStop(0, '#4df0ff');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r * 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#4df0ff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  function drawConnections(pts) {
+    for (var i = 0; i < pts.length; i++) {
+      for (var j = i + 1; j < pts.length; j++) {
+        var dx = pts[i].x - pts[j].x;
+        var dy = pts[i].y - pts[j].y;
+        var d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < 80) {
+          ctx.globalAlpha = (1 - d / 80) * 0.07;
+          ctx.strokeStyle = '#4df0ff';
+          ctx.lineWidth   = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function drawMouseGlow() {
+    if (!mouse.inside) return;
+    ctx.globalAlpha = 0.12;
+    var g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 110);
+    g.addColorStop(0, '#4df0ff');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, 110, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  var particles = [];
+  for (var i = 0; i < PARTICLE_COUNT; i++) particles.push(new AgParticle());
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    drawMouseGlow();
+    drawConnections(particles);
+    for (var k = 0; k < particles.length; k++) {
+      particles[k].update();
+      particles[k].draw();
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(loop);
+  }
+
+  canvas.addEventListener('mousemove', function (e) {
+    var rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+    mouse.inside = true;
+  }, { passive: true });
+  canvas.addEventListener('mouseleave', function () { mouse.inside = false; }, { passive: true });
+  canvas.addEventListener('touchmove', function (e) {
+    var rect = canvas.getBoundingClientRect();
+    mouse.x = e.touches[0].clientX - rect.left;
+    mouse.y = e.touches[0].clientY - rect.top;
+    mouse.inside = true;
+  }, { passive: true });
+  canvas.addEventListener('touchend', function () { mouse.inside = false; }, { passive: true });
+
+  loop();
+
+  window.setAgMode = function (m) {
+    mode = m;
+    var labels = { repulse: 'REPULSION MODE', attract: 'ATTRACTION MODE', chaos: 'CHAOS MODE' };
+    var lbl = document.getElementById('agModeLabel');
+    if (lbl) lbl.textContent = labels[m] || m.toUpperCase() + ' MODE';
+    ['agRepulse','agAttract','agChaos'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.toggle('active', el.id === 'ag' + m.charAt(0).toUpperCase() + m.slice(1));
+    });
+  };
+})();
+
+// ── 9. CUSTOM CURSOR (desktop only) ─────────────────────────────────────────
 (function () {
   if (window.matchMedia('(hover: none)').matches) return;
   if (window.innerWidth < 900) return;

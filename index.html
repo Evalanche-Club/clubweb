@@ -35,6 +35,19 @@
       overflow: hidden;
     }
 
+    /* Radial glow behind hero content */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -52%);
+      width: 700px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(77,240,255,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
     .hero-eyebrow {
       font-family: 'Space Mono', monospace;
       font-size: 0.7rem;
@@ -53,7 +66,12 @@
       filter: drop-shadow(0 0 30px rgba(77,240,255,0.6));
       margin-bottom: 2rem;
       opacity: 0;
-      animation: fadeUp 0.8s ease 0.5s forwards;
+      animation: fadeUp 0.8s ease 0.5s forwards, heroFloat 6s ease-in-out 1.5s infinite;
+    }
+
+    @keyframes heroFloat {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-10px); }
     }
 
     .hero-title {
@@ -204,6 +222,7 @@
       color: var(--accent);
       line-height: 1;
       margin-bottom: 0.4rem;
+      text-shadow: 0 0 24px rgba(77,240,255,0.35);
     }
 
     .stat-label {
@@ -287,12 +306,30 @@
     }
 
     .vm-card:hover::before { transform: scaleY(1); }
-    .vm-card:hover { border-color: rgba(77,240,255,0.3); background: rgba(77,240,255,0.04); }
+    .vm-card:hover {
+      border-color: rgba(77,240,255,0.3);
+      background: rgba(77,240,255,0.04);
+      box-shadow: 0 4px 32px rgba(77,240,255,0.06);
+    }
 
     .vm-card-icon {
       font-size: 1.5rem;
       color: var(--accent);
       margin-bottom: 1rem;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(77,240,255,0.07);
+      border: 1px solid rgba(77,240,255,0.18);
+      border-radius: 4px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .vm-card:hover .vm-card-icon {
+      background: rgba(77,240,255,0.12);
+      box-shadow: 0 0 16px rgba(77,240,255,0.2);
     }
 
     .vm-card h3 {
@@ -510,6 +547,98 @@
       max-width: 500px;
       margin: 0 auto 2.5rem;
       line-height: 1.7;
+    }
+
+    /* ===== ANTI-GRAVITY SECTION ===== */
+    .antigravity-section {
+      padding: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .antigravity-header {
+      position: absolute;
+      top: 1.2rem;
+      left: 1.8rem;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+
+    .ag-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: rgba(77,240,255,0.5);
+    }
+
+    .ag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: agPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes agPulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(77,240,255,0.5); }
+      50%       { opacity: 0.4; box-shadow: 0 0 0 5px rgba(77,240,255,0); }
+    }
+
+    .ag-controls {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      z-index: 2;
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .ag-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.52rem;
+      letter-spacing: 0.18em;
+      padding: 0.35rem 0.75rem;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(77,240,255,0.12);
+      border-radius: 2px;
+      color: rgba(77,240,255,0.4);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .ag-btn:hover {
+      border-color: rgba(77,240,255,0.4);
+      color: rgba(77,240,255,0.8);
+      background: rgba(77,240,255,0.05);
+    }
+
+    .ag-btn.active {
+      background: rgba(77,240,255,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 8px rgba(77,240,255,0.15);
+    }
+
+    #antigravityCanvas {
+      display: block;
+      width: 100%;
+      height: 240px;
+      cursor: crosshair;
+    }
+
+    @media (max-width: 600px) {
+      .ag-controls { position: static; padding: 0.75rem 1rem 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+      .antigravity-header { position: static; padding: 0.75rem 1rem 0; }
+      .antigravity-section { padding-bottom: 0; }
+      #antigravityCanvas { height: 160px; }
     }
 
     /* ===== OSCILLOSCOPE SECTION ===== */
@@ -854,6 +983,7 @@
     [data-theme="light"] .marquee-section { background: rgba(0,0,0,0.04); }
     [data-theme="light"] .marquee-item    { color: rgba(0,0,0,0.08); }
     [data-theme="light"] .oscilloscope-section { background: rgba(0,0,0,0.04); }
+    [data-theme="light"] .antigravity-section  { background: rgba(0,0,0,0.04); }
     [data-theme="light"] .cta-heading em {
       -webkit-text-stroke: 1px var(--accent); color:transparent;
     }
@@ -989,6 +1119,22 @@
       <button class="osc-wave-btn"        data-wave="pwm"      onclick="setOscWave('pwm')">PWM</button>
     </div>
     <canvas id="oscilloscopeCanvas"></canvas>
+  </div>
+
+  <!-- ANTI-GRAVITY PHYSICS LAB -->
+  <div class="antigravity-section">
+    <div class="antigravity-header">
+      <div class="ag-dot"></div>
+      <span class="ag-label">ANTI-GRAVITY LAB</span>
+      <span class="ag-label" style="opacity:0.25">|</span>
+      <span class="ag-label" id="agModeLabel">REPULSION MODE</span>
+    </div>
+    <div class="ag-controls">
+      <button class="ag-btn active" id="agRepulse" onclick="setAgMode('repulse')">REPULSE</button>
+      <button class="ag-btn"        id="agAttract" onclick="setAgMode('attract')">ATTRACT</button>
+      <button class="ag-btn"        id="agChaos"   onclick="setAgMode('chaos')">CHAOS</button>
+    </div>
+    <canvas id="antigravityCanvas"></canvas>
   </div>
 
   <!-- MAIN CONTENT -->
